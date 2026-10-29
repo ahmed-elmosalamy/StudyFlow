@@ -55,9 +55,19 @@ class SubjectDetailScreen extends ConsumerWidget {
                       subtitle: notes == null || notes.isEmpty
                           ? null
                           : Text(notes),
-                      trailing: Text(
-                        _topicStatusLabel(topic.status),
-                        style: Theme.of(context).textTheme.labelMedium,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _topicStatusLabel(topic.status),
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                      onTap: () => context.push(
+                        '/goals/$goalId/subjects/$subjectId/topics/${topic.id}',
                       ),
                     ),
                   );
