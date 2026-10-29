@@ -3,4 +3,8 @@
     <!-- Matches AppTheme light colorScheme.surface so the launch window blends
          into the first Flutter frame. -->
     <color name="launch_background">#FBF8FF</color>
+
+    <!-- Matches the launcher icon artwork background so the adaptive icon
+         blends into its canvas. -->
+    <color name="ic_launcher_background">#FDFDFD</color>
 </resources>
