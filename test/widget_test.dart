@@ -36,13 +36,13 @@ void main() {
     );
 
     await tester.tap(find.byTooltip('Settings'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
 
-    expect(
-      find.text('Settings screen - arrives in a later milestone.'),
-      findsOneWidget,
-    );
+    expect(find.text('Availability'), findsOneWidget);
+    expect(find.text('Planning Limits'), findsOneWidget);
+    expect(find.text('Appearance'), findsOneWidget);
+    expect(find.text('App Information'), findsOneWidget);
+    expect(find.text('1.0.0+1'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 100));

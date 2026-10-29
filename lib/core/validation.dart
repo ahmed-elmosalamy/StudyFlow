@@ -192,4 +192,28 @@ abstract final class ValidationRules {
       throw const ValidationException('Window end must be after its start.');
     }
   }
+
+  static void validateAvailabilityOverlap({
+    required int weekday,
+    required int startMinute,
+    required int endMinute,
+    required Iterable<AvailabilityWindowRange> existing,
+  }) {
+    for (final window in existing) {
+      if (window.weekday != weekday) {
+        continue;
+      }
+      if (startMinute < window.endMinute && window.startMinute < endMinute) {
+        throw const ValidationException(
+          'Availability windows cannot overlap on the same weekday.',
+        );
+      }
+    }
+  }
 }
+
+typedef AvailabilityWindowRange = ({
+  int weekday,
+  int startMinute,
+  int endMinute,
+});

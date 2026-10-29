@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/goals/goals_screen.dart';
 import '../../features/goals/presentation/goal_detail_screen.dart';
 import '../../features/goals/presentation/goal_form_screen.dart';
+import '../../features/settings/presentation/availability_screen.dart';
+import '../../features/settings/presentation/planning_limits_screen.dart';
 import '../../features/subjects/presentation/subject_detail_screen.dart';
 import '../../features/subjects/presentation/subject_form_screen.dart';
 import '../../features/tasks/presentation/task_form_screen.dart';
@@ -59,6 +61,14 @@ GoRouter buildRouter() {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/planning-limits',
+        builder: (context, state) => const PlanningLimitsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/availability',
+        builder: (context, state) => const AvailabilityScreen(),
       ),
       GoRoute(
         path: '/goals/new',

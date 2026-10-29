@@ -10,6 +10,12 @@ class SettingsRepository {
     return _db.select(_db.appSettings).watch();
   }
 
+  Stream<AppSetting?> watchSettings() {
+    return (_db.select(
+      _db.appSettings,
+    )..where((t) => t.id.equals(1))).watchSingleOrNull();
+  }
+
   Future<AppSetting?> getById(int id) {
     return (_db.select(
       _db.appSettings,
