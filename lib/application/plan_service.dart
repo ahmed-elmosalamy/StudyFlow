@@ -87,6 +87,15 @@ class PlanService {
     return result;
   }
 
+  Future<void> replanIfAutoEnabled() async {
+    final settings = await settingsRepository.getSettings();
+    if (settings.autoReplan != 0) {
+      await replan();
+    } else if (settings.planStale == 0) {
+      await settingsRepository.update(settings.copyWith(planStale: 1));
+    }
+  }
+
   engine.EngineTask _toEngineTask(Task task) {
     return engine.EngineTask(
       id: task.id,

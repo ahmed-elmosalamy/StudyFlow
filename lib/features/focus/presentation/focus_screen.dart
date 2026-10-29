@@ -13,26 +13,30 @@ class FocusScreen extends ConsumerWidget {
 
   final String sessionId;
 
+  Future<bool> _confirmLeave(BuildContext context) async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Leave focus?'),
+        content: const Text('The timer keeps running while you are away.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Stay'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+    return leave == true;
+  }
+
   Future<void> _leave(BuildContext context, TimerState? timer) async {
     if (timer != null && timer.isRunning) {
-      final leave = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Leave focus?'),
-          content: const Text('The timer keeps running while you are away.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Stay'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Leave'),
-            ),
-          ],
-        ),
-      );
-      if (leave != true) {
+      if (!await _confirmLeave(context)) {
         return;
       }
     }
@@ -44,28 +48,40 @@ class FocusScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final timerAsync = ref.watch(timerControllerProvider(sessionId));
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Focus'),
-        actions: [
-          TextButton(
-            onPressed: () => _leave(context, timerAsync.value),
-            child: const Text('Leave'),
-          ),
-        ],
-      ),
-      body: timerAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'Could not load the session.\n$error',
-              textAlign: TextAlign.center,
+    final running = timerAsync.value?.isRunning ?? false;
+    return PopScope(
+      canPop: !running,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) {
+          return;
+        }
+        if (await _confirmLeave(context) && context.mounted) {
+          context.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Focus'),
+          actions: [
+            TextButton(
+              onPressed: () => _leave(context, timerAsync.value),
+              child: const Text('Leave'),
+            ),
+          ],
+        ),
+        body: timerAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Could not load the session.\n$error',
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
+          data: (timer) => _FocusBody(sessionId: sessionId, timer: timer),
         ),
-        data: (timer) => _FocusBody(sessionId: sessionId, timer: timer),
       ),
     );
   }

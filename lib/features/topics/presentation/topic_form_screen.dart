@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/providers.dart';
 import '../../../core/validation.dart';
 import '../../../data/database/tables.dart';
 import '../providers/topics_providers.dart';
@@ -37,7 +38,7 @@ class _TopicFormScreenState extends ConsumerState<TopicFormScreen> {
 
     final notes = _notesController.text.trim();
     try {
-      await ref
+      final topic = await ref
           .read(topicRepositoryProvider)
           .insert(
             subjectId: widget.subjectId,
@@ -45,6 +46,24 @@ class _TopicFormScreenState extends ConsumerState<TopicFormScreen> {
             notes: notes.isEmpty ? null : notes,
             status: _status,
           );
+      if (_status == TopicStatus.learned) {
+        try {
+          await ref
+              .read(revisionServiceProvider)
+              .generateRevisionsForTopic(topic.id);
+          await ref.read(planServiceProvider).replanIfAutoEnabled();
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Topic saved, but its revisions could not be generated.',
+                ),
+              ),
+            );
+          }
+        }
+      }
       if (!mounted) return;
       Navigator.of(context).pop();
     } on ValidationException catch (error) {

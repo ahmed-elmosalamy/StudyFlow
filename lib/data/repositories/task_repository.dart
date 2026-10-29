@@ -1,14 +1,16 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../core/time/clock.dart';
 import '../../core/validation.dart';
 import '../database/app_database.dart';
 import '../database/tables.dart';
 
 class TaskRepository {
-  TaskRepository(this._db);
+  TaskRepository(this._db, {this.clock = const SystemClock()});
 
   final AppDatabase _db;
+  final Clock clock;
 
   static const _uuid = Uuid();
 
@@ -118,6 +120,9 @@ class TaskRepository {
     await (_db.update(
       _db.tasks,
     )..where((t) => t.id.equals(task.id))).write(updated.toCompanion(false));
+    if (_removesScheduledSessions(task.status)) {
+      await _deleteFutureScheduledSessions(task.id);
+    }
   }
 
   Future<void> deleteOrArchive(String id) async {
@@ -126,7 +131,10 @@ class TaskRepository {
       throw NotFoundException('Task $id was not found.');
     }
     try {
-      await (_db.delete(_db.tasks)..where((t) => t.id.equals(id))).go();
+      await _db.transaction(() async {
+        await _deleteFutureScheduledSessions(id);
+        await (_db.delete(_db.tasks)..where((t) => t.id.equals(id))).go();
+      });
     } catch (error) {
       if (error.toString().contains('FOREIGN KEY constraint failed')) {
         throw const ConflictException(
@@ -135,6 +143,26 @@ class TaskRepository {
       }
       rethrow;
     }
+  }
+
+  bool _removesScheduledSessions(TaskStatus status) {
+    return status == TaskStatus.completed ||
+        status == TaskStatus.cancelled ||
+        status == TaskStatus.archived;
+  }
+
+  Future<void> _deleteFutureScheduledSessions(String taskId) {
+    final today = clock.today.toString();
+    final nowMinute = clock.nowMinuteOfDay;
+    return (_db.delete(_db.studySessions)..where(
+          (t) =>
+              t.taskId.equals(taskId) &
+              t.status.equalsValue(SessionStatus.scheduled) &
+              (t.sessionDate.isBiggerThanValue(today) |
+                  (t.sessionDate.equals(today) &
+                      t.startMinute.isBiggerThanValue(nowMinute))),
+        ))
+        .go();
   }
 
   String _validate({

@@ -150,7 +150,7 @@ void main() {
   });
 
   test(
-    'finish completing the remaining work cancels future sessions',
+    'finish completing the remaining work deletes future sessions',
     () async {
       final futureSession = await SessionRepository(database).insert(
         taskId: taskId,
@@ -171,8 +171,7 @@ void main() {
       final future = await SessionRepository(
         database,
       ).getById(futureSession.id);
-      expect(future!.status, SessionStatus.cancelled);
-      expect(future.sessionDate, clock.today.addDays(1).toString());
+      expect(future, isNull);
     },
   );
 

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/plan_service.dart';
 import '../application/reconciliation_service.dart';
+import '../application/revision_service.dart';
 import '../core/time/clock.dart';
 import '../data/database/app_database.dart';
 import '../data/repositories/availability_repository.dart';
@@ -9,6 +10,7 @@ import '../data/repositories/goal_repository.dart';
 import '../data/repositories/session_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/task_repository.dart';
+import '../data/repositories/topic_repository.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final database = AppDatabase();
@@ -41,5 +43,16 @@ final reconciliationServiceProvider = Provider<ReconciliationService>((ref) {
     settingsRepository: SettingsRepository(database),
     planService: ref.watch(planServiceProvider),
     clock: ref.watch(clockProvider),
+  );
+});
+
+final revisionServiceProvider = Provider<RevisionService>((ref) {
+  final database = ref.watch(databaseProvider);
+  final clock = ref.watch(clockProvider);
+  return RevisionService(
+    topicRepository: TopicRepository(database),
+    taskRepository: TaskRepository(database, clock: clock),
+    settingsRepository: SettingsRepository(database),
+    clock: clock,
   );
 });

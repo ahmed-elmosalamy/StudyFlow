@@ -10,7 +10,6 @@ import '../../../core/validation.dart';
 import '../../../data/database/app_database.dart';
 import '../../../data/database/tables.dart';
 import '../../../data/repositories/session_repository.dart';
-import '../../../data/repositories/settings_repository.dart';
 import '../../../data/repositories/task_repository.dart';
 
 class TimerState {
@@ -77,10 +76,8 @@ class TimerController extends AsyncNotifier<TimerState> {
   SessionRepository get _sessions =>
       SessionRepository(ref.read(databaseProvider));
 
-  TaskRepository get _tasks => TaskRepository(ref.read(databaseProvider));
-
-  SettingsRepository get _settings =>
-      SettingsRepository(ref.read(databaseProvider));
+  TaskRepository get _tasks =>
+      TaskRepository(ref.read(databaseProvider), clock: _clock);
 
   Clock get _clock => ref.read(clockProvider);
 
@@ -255,23 +252,10 @@ class TimerController extends AsyncNotifier<TimerState> {
           completedAt: remaining == 0 ? Value(nowMillis) : const Value.absent(),
         ),
       );
-      if (remaining == 0) {
-        await _sessions.cancelFutureScheduledForTask(
-          session.taskId,
-          today: _clock.today.toString(),
-          nowMinute: _clock.nowMinuteOfDay,
-          updatedAt: nowMillis,
-        );
-      }
     });
     _stopTicker();
 
-    final settings = await _settings.getSettings();
-    if (settings.autoReplan != 0) {
-      await ref.read(planServiceProvider).replan();
-    } else if (settings.planStale == 0) {
-      await _settings.update(settings.copyWith(planStale: 1));
-    }
+    await ref.read(planServiceProvider).replanIfAutoEnabled();
 
     if (!ref.mounted) {
       return;
