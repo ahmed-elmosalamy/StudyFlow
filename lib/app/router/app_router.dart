@@ -1,7 +1,11 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/goals/goals_screen.dart';
+import '../../features/goals/presentation/goal_detail_screen.dart';
 import '../../features/goals/presentation/goal_form_screen.dart';
+import '../../features/subjects/presentation/subject_detail_screen.dart';
+import '../../features/subjects/presentation/subject_form_screen.dart';
+import '../../features/topics/presentation/topic_form_screen.dart';
 import '../../presentation/progress/progress_screen.dart';
 import '../../presentation/schedule/schedule_screen.dart';
 import '../../presentation/settings/settings_screen.dart';
@@ -57,6 +61,28 @@ GoRouter buildRouter() {
       GoRoute(
         path: '/goals/new',
         builder: (context, state) => const GoalFormScreen(),
+      ),
+      GoRoute(
+        path: '/goals/:goalId/subjects/new',
+        builder: (context, state) =>
+            SubjectFormScreen(goalId: state.pathParameters['goalId']!),
+      ),
+      GoRoute(
+        path: '/goals/:goalId/subjects/:subjectId/topics/new',
+        builder: (context, state) =>
+            TopicFormScreen(subjectId: state.pathParameters['subjectId']!),
+      ),
+      GoRoute(
+        path: '/goals/:goalId/subjects/:subjectId',
+        builder: (context, state) => SubjectDetailScreen(
+          goalId: state.pathParameters['goalId']!,
+          subjectId: state.pathParameters['subjectId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/goals/:goalId',
+        builder: (context, state) =>
+            GoalDetailScreen(goalId: state.pathParameters['goalId']!),
       ),
     ],
   );

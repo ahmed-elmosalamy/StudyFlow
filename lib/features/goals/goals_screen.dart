@@ -49,6 +49,8 @@ class GoalsScreen extends ConsumerWidget {
                   subtitle: description == null || description.isEmpty
                       ? null
                       : Text(description),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/goals/${goal.id}'),
                 ),
               );
             },
