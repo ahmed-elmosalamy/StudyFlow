@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../today/today_screen.dart';
+
 class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.navigationShell});
 
@@ -35,6 +37,7 @@ class MainShell extends StatelessWidget {
       appBar: AppBar(
         title: Text(_destinations[navigationShell.currentIndex].label),
         actions: [
+          if (navigationShell.currentIndex == 0) const TodayReplanAction(),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',

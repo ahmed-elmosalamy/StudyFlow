@@ -12,7 +12,7 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Today screen - arrives in a later milestone.'),
+      find.text('No study sessions planned for today. Enjoy your free time!'),
       findsOneWidget,
     );
 

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/plan_service.dart';
+import '../application/reconciliation_service.dart';
 import '../core/time/clock.dart';
 import '../data/database/app_database.dart';
 import '../data/repositories/availability_repository.dart';
@@ -29,6 +30,16 @@ final planServiceProvider = Provider<PlanService>((ref) {
     sessionRepository: SessionRepository(database),
     settingsRepository: SettingsRepository(database),
     availabilityRepository: AvailabilityRepository(database),
+    clock: ref.watch(clockProvider),
+  );
+});
+
+final reconciliationServiceProvider = Provider<ReconciliationService>((ref) {
+  final database = ref.watch(databaseProvider);
+  return ReconciliationService(
+    sessionRepository: SessionRepository(database),
+    settingsRepository: SettingsRepository(database),
+    planService: ref.watch(planServiceProvider),
     clock: ref.watch(clockProvider),
   );
 });

@@ -36,6 +36,48 @@ class SessionRepository {
         .watch();
   }
 
+  Stream<List<StudySession>> watchTodaySessions(String date) {
+    return (_db.select(_db.studySessions)
+          ..where(
+            (t) =>
+                t.sessionDate.equals(date) &
+                (t.status.equalsValue(SessionStatus.scheduled) |
+                    t.status.equalsValue(SessionStatus.in_progress)),
+          )
+          ..orderBy([(t) => OrderingTerm.asc(t.startMinute)]))
+        .watch();
+  }
+
+  Future<List<StudySession>> getScheduled() {
+    return (_db.select(_db.studySessions)
+          ..where((t) => t.status.equalsValue(SessionStatus.scheduled))
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.sessionDate),
+            (t) => OrderingTerm.asc(t.startMinute),
+          ]))
+        .get();
+  }
+
+  Future<void> markMissed(
+    Iterable<String> ids, {
+    required int updatedAt,
+  }) async {
+    final idList = ids.toList(growable: false);
+    if (idList.isEmpty) {
+      return;
+    }
+    await (_db.update(_db.studySessions)..where(
+          (t) =>
+              t.id.isIn(idList) & t.status.equalsValue(SessionStatus.scheduled),
+        ))
+        .write(
+          StudySessionsCompanion(
+            status: const Value(SessionStatus.missed),
+            updatedAt: Value(updatedAt),
+          ),
+        );
+  }
+
   Future<List<StudySession>> getPlanningCandidates({required String today}) {
     return (_db.select(_db.studySessions)
           ..where(
