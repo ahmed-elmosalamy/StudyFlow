@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../features/focus/presentation/focus_screen.dart';
 import '../../features/goals/goals_screen.dart';
 import '../../features/goals/presentation/goal_detail_screen.dart';
 import '../../features/goals/presentation/goal_form_screen.dart';
@@ -57,6 +58,11 @@ GoRouter buildRouter() {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/focus/:sessionId',
+        builder: (context, state) =>
+            FocusScreen(sessionId: state.pathParameters['sessionId']!),
       ),
       GoRoute(
         path: '/settings',

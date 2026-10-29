@@ -48,6 +48,55 @@ class SessionRepository {
         .watch();
   }
 
+  Future<List<StudySession>> getInProgress() {
+    return (_db.select(
+      _db.studySessions,
+    )..where((t) => t.status.equalsValue(SessionStatus.in_progress))).get();
+  }
+
+  Future<void> markCompleted(
+    String id, {
+    required int actualMinutes,
+    required int completedAtUtc,
+    required int timerAccumulatedSeconds,
+    required int updatedAt,
+  }) async {
+    ValidationRules.validateActualMinutes(actualMinutes);
+    ValidationRules.validateTimerSeconds(timerAccumulatedSeconds);
+    await (_db.update(_db.studySessions)..where((t) => t.id.equals(id))).write(
+      StudySessionsCompanion(
+        status: const Value(SessionStatus.completed),
+        actualMinutes: Value(actualMinutes),
+        completedAtUtc: Value(completedAtUtc),
+        timerAccumulatedSeconds: Value(timerAccumulatedSeconds),
+        timerResumedAtUtc: const Value(null),
+        updatedAt: Value(updatedAt),
+      ),
+    );
+  }
+
+  Future<void> cancelFutureScheduledForTask(
+    String taskId, {
+    required String today,
+    required int nowMinute,
+    required int updatedAt,
+  }) async {
+    await (_db.update(_db.studySessions)..where(
+          (t) =>
+              t.taskId.equals(taskId) &
+              t.status.equalsValue(SessionStatus.scheduled) &
+              (t.sessionDate.isBiggerThanValue(today) |
+                  (t.sessionDate.equals(today) &
+                      t.startMinute.isBiggerThanValue(nowMinute))),
+        ))
+        .write(
+          StudySessionsCompanion(
+            status: const Value(SessionStatus.cancelled),
+            updatedAt: Value(updatedAt),
+          ),
+        );
+  }
+
   Future<List<StudySession>> getScheduled() {
     return (_db.select(_db.studySessions)
           ..where((t) => t.status.equalsValue(SessionStatus.scheduled))

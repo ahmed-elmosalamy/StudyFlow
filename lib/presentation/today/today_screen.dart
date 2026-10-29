@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../data/database/app_database.dart';
@@ -57,6 +58,7 @@ class _SessionList extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
+            onTap: () => context.push('/focus/${session.id}'),
             leading: Icon(
               inProgress ? Icons.play_circle_outline : Icons.menu_book_outlined,
             ),
