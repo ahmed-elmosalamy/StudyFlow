@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
-import '../../presentation/goals/goals_screen.dart';
+import '../../features/goals/goals_screen.dart';
+import '../../features/goals/presentation/goal_form_screen.dart';
 import '../../presentation/progress/progress_screen.dart';
 import '../../presentation/schedule/schedule_screen.dart';
 import '../../presentation/settings/settings_screen.dart';
@@ -52,6 +53,10 @@ GoRouter buildRouter() {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/goals/new',
+        builder: (context, state) => const GoalFormScreen(),
       ),
     ],
   );
