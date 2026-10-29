@@ -9,7 +9,7 @@ class TodayScreen extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Today screen — arrives in a later milestone.',
+          'Today screen - arrives in a later milestone.',
           textAlign: TextAlign.center,
         ),
       ),

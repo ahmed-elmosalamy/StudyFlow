@@ -9,7 +9,7 @@ class GoalsScreen extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Goals screen — arrives in a later milestone.',
+          'Goals screen - arrives in a later milestone.',
           textAlign: TextAlign.center,
         ),
       ),

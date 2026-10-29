@@ -11,7 +11,7 @@ class SettingsScreen extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            'Settings screen — arrives in a later milestone.',
+            'Settings screen - arrives in a later milestone.',
             textAlign: TextAlign.center,
           ),
         ),

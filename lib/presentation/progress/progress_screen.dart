@@ -9,7 +9,7 @@ class ProgressScreen extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Progress screen — arrives in a later milestone.',
+          'Progress screen - arrives in a later milestone.',
           textAlign: TextAlign.center,
         ),
       ),

@@ -9,25 +9,25 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Today screen — arrives in a later milestone.'),
+      find.text('Today screen - arrives in a later milestone.'),
       findsOneWidget,
     );
 
     await _tapTab(tester, 'Goals');
     expect(
-      find.text('Goals screen — arrives in a later milestone.'),
+      find.text('Goals screen - arrives in a later milestone.'),
       findsOneWidget,
     );
 
     await _tapTab(tester, 'Schedule');
     expect(
-      find.text('Schedule screen — arrives in a later milestone.'),
+      find.text('Schedule screen - arrives in a later milestone.'),
       findsOneWidget,
     );
 
     await _tapTab(tester, 'Progress');
     expect(
-      find.text('Progress screen — arrives in a later milestone.'),
+      find.text('Progress screen - arrives in a later milestone.'),
       findsOneWidget,
     );
 
@@ -36,7 +36,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(
-      find.text('Settings screen — arrives in a later milestone.'),
+      find.text('Settings screen - arrives in a later milestone.'),
       findsOneWidget,
     );
   });

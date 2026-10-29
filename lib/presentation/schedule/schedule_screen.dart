@@ -9,7 +9,7 @@ class ScheduleScreen extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Schedule screen — arrives in a later milestone.',
+          'Schedule screen - arrives in a later milestone.',
           textAlign: TextAlign.center,
         ),
       ),
