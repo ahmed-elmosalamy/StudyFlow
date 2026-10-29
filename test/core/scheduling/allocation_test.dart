@@ -130,7 +130,8 @@ void main() {
     }
     expect(_allocation(result, 'A').newlyPlannedMinutes, 240);
     expect(_allocation(result, 'A').unscheduledMinutes, 60);
-    expect(result.issues, isEmpty);
+    expect(result.issues, hasLength(1));
+    expect(result.issues.single.type, SchedulingIssueType.impossibleDeadline);
   });
 
   test('splits a long task across days by the daily limit', () {

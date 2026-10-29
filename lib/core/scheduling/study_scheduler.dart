@@ -121,7 +121,22 @@ PlanResult generatePlan(SchedulingInput input) {
     );
   }
 
+  final usableCapacityByDate = <LocalDate, int>{};
+  var hasFreeInterval = false;
+  for (final entry in days.entries) {
+    final day = entry.value;
+    if (day.freeIntervals.isNotEmpty) {
+      hasFreeInterval = true;
+    }
+    final freeMinutes = day.freeIntervals.fold<int>(
+      0,
+      (total, interval) => total + interval.length,
+    );
+    usableCapacityByDate[entry.key] = min(day.remainingCapacity, freeMinutes);
+  }
+
   final sessions = <PlannedSession>[];
+  final outcomes = <_TaskOutcome>[];
   final allocations = <TaskAllocation>[];
   final plannedByDate = <LocalDate, int>{};
 
@@ -209,6 +224,14 @@ PlanResult generatePlan(SchedulingInput input) {
       }
     }
 
+    outcomes.add(
+      _TaskOutcome(
+        task: task,
+        reservedMinutes: reservedMinutes,
+        newlyPlannedMinutes: newlyPlanned,
+        unscheduledMinutes: remaining,
+      ),
+    );
     allocations.add(
       TaskAllocation(
         taskId: task.id,
@@ -240,12 +263,197 @@ PlanResult generatePlan(SchedulingInput input) {
       ),
   ];
 
+  final issues = <SchedulingIssue>[];
+  if (!hasFreeInterval) {
+    issues.add(const SchedulingIssue(type: SchedulingIssueType.noAvailability));
+  }
+  for (final outcome in outcomes) {
+    final issue = _issueFor(
+      outcome,
+      today: today,
+      horizonEnd: horizonEnd,
+      usableCapacityByDate: usableCapacityByDate,
+      sessions: sessions,
+      lockedSessions: input.lockedSessions,
+    );
+    if (issue != null) {
+      issues.add(issue);
+    }
+  }
+
   return PlanResult(
     sessions: sessions,
     allocations: allocations,
     daySummaries: daySummaries,
-    issues: const [],
+    issues: issues,
   );
+}
+
+class _TaskOutcome {
+  const _TaskOutcome({
+    required this.task,
+    required this.reservedMinutes,
+    required this.newlyPlannedMinutes,
+    required this.unscheduledMinutes,
+  });
+
+  final EngineTask task;
+  final int reservedMinutes;
+  final int newlyPlannedMinutes;
+  final int unscheduledMinutes;
+
+  int get scheduledMinutes => reservedMinutes + newlyPlannedMinutes;
+}
+
+SchedulingIssue? _issueFor(
+  _TaskOutcome outcome, {
+  required LocalDate today,
+  required LocalDate horizonEnd,
+  required Map<LocalDate, int> usableCapacityByDate,
+  required List<PlannedSession> sessions,
+  required List<LockedSession> lockedSessions,
+}) {
+  final task = outcome.task;
+  final notBefore = task.notBefore;
+
+  if (notBefore != null && notBefore.isAfter(horizonEnd)) {
+    if (task.remainingMinutes <= 0) {
+      return null;
+    }
+    return SchedulingIssue(
+      type: SchedulingIssueType.deferredBeyondHorizon,
+      taskId: task.id,
+      notBefore: notBefore,
+      remainingMinutes: task.remainingMinutes,
+    );
+  }
+
+  final deadline = task.deadline;
+  if (deadline == null) {
+    if (outcome.unscheduledMinutes <= 0) {
+      return null;
+    }
+    return SchedulingIssue(
+      type: SchedulingIssueType.horizonBacklog,
+      taskId: task.id,
+      remainingMinutes: task.remainingMinutes,
+      scheduledMinutes: outcome.scheduledMinutes,
+      unscheduledMinutes: outcome.unscheduledMinutes,
+    );
+  }
+
+  if (deadline.isBefore(today)) {
+    if (task.remainingMinutes <= 0) {
+      return null;
+    }
+    return SchedulingIssue(
+      type: SchedulingIssueType.overdueTask,
+      taskId: task.id,
+      deadline: deadline,
+      remainingMinutes: task.remainingMinutes,
+      scheduledMinutes: outcome.scheduledMinutes,
+      unscheduledMinutes: outcome.unscheduledMinutes,
+      daysOverdue: _daysBetween(deadline, today),
+    );
+  }
+
+  if (!deadline.isAfter(horizonEnd)) {
+    if (outcome.unscheduledMinutes <= 0) {
+      return null;
+    }
+    final searchStart = notBefore != null && notBefore.isAfter(today)
+        ? notBefore
+        : today;
+    var availableCapacity = 0;
+    for (var date = today; !date.isAfter(deadline); date = date.addDays(1)) {
+      availableCapacity += usableCapacityByDate[date] ?? 0;
+    }
+    var daysAvailable = 0;
+    for (
+      var date = searchStart;
+      !date.isAfter(deadline);
+      date = date.addDays(1)
+    ) {
+      if ((usableCapacityByDate[date] ?? 0) > 0) {
+        daysAvailable++;
+      }
+    }
+    var otherMinutes = 0;
+    for (final session in sessions) {
+      if (session.taskId != task.id && !session.date.isAfter(deadline)) {
+        otherMinutes += session.plannedMinutes;
+      }
+    }
+    final scheduledBeforeDeadline = _scheduledBeforeDeadline(
+      outcome,
+      deadline,
+      sessions,
+      lockedSessions,
+    );
+    final deficit = max(0, task.remainingMinutes - scheduledBeforeDeadline);
+    final suggestedExtra = daysAvailable > 0
+        ? ceilTo5((deficit + daysAvailable - 1) ~/ daysAvailable)
+        : null;
+    return SchedulingIssue(
+      type: SchedulingIssueType.impossibleDeadline,
+      taskId: task.id,
+      deadline: deadline,
+      remainingMinutes: task.remainingMinutes,
+      reservedActiveMinutes: outcome.reservedMinutes,
+      scheduledBeforeDeadlineMinutes: scheduledBeforeDeadline,
+      deficitMinutes: deficit,
+      availableCapacityBeforeDeadline: availableCapacity,
+      otherMinutesBeforeDeadline: otherMinutes,
+      daysAvailableBeforeDeadline: daysAvailable,
+      suggestedExtraMinutesPerDay: suggestedExtra,
+    );
+  }
+
+  if (outcome.unscheduledMinutes <= 0) {
+    return null;
+  }
+  return SchedulingIssue(
+    type: SchedulingIssueType.beyondHorizon,
+    taskId: task.id,
+    deadline: deadline,
+    remainingMinutes: task.remainingMinutes,
+    scheduledMinutes: outcome.scheduledMinutes,
+    unscheduledMinutes: outcome.unscheduledMinutes,
+  );
+}
+
+int _scheduledBeforeDeadline(
+  _TaskOutcome outcome,
+  LocalDate deadline,
+  List<PlannedSession> sessions,
+  List<LockedSession> lockedSessions,
+) {
+  var total = 0;
+  for (final session in sessions) {
+    if (session.taskId == outcome.task.id && !session.date.isAfter(deadline)) {
+      total += session.plannedMinutes;
+    }
+  }
+  for (final lock in lockedSessions) {
+    if (lock.taskId != outcome.task.id || lock.date.isAfter(deadline)) {
+      continue;
+    }
+    if (lock.status == SessionStatus.inProgress ||
+        lock.status == SessionStatus.activeScheduledToday) {
+      total += lock.plannedMinutes;
+    }
+  }
+  return total;
+}
+
+int _daysBetween(LocalDate from, LocalDate to) {
+  var days = 0;
+  var cursor = from;
+  while (cursor.isBefore(to)) {
+    cursor = cursor.addDays(1);
+    days++;
+  }
+  return days;
 }
 
 DaySummary _daySummary(LocalDate date, DayPlan day, int plannedMinutes) {
