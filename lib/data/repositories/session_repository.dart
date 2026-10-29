@@ -48,6 +48,36 @@ class SessionRepository {
         .watch();
   }
 
+  Stream<List<StudySession>> watchCompletedBetween({
+    required String fromDate,
+    required String toDate,
+  }) {
+    return (_db.select(_db.studySessions)
+          ..where(
+            (t) =>
+                t.status.equalsValue(SessionStatus.completed) &
+                t.sessionDate.isBiggerOrEqualValue(fromDate) &
+                t.sessionDate.isSmallerOrEqualValue(toDate),
+          )
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.sessionDate),
+            (t) => OrderingTerm.asc(t.startMinute),
+          ]))
+        .watch();
+  }
+
+  Stream<List<StudySession>> watchRecentCompleted({int limit = 5}) {
+    return (_db.select(_db.studySessions)
+          ..where((t) => t.status.equalsValue(SessionStatus.completed))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.completedAtUtc),
+            (t) => OrderingTerm.desc(t.sessionDate),
+            (t) => OrderingTerm.desc(t.startMinute),
+          ])
+          ..limit(limit))
+        .watch();
+  }
+
   Future<List<StudySession>> getInProgress() {
     return (_db.select(
       _db.studySessions,

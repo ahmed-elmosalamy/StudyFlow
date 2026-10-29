@@ -32,10 +32,11 @@ void main() {
     expect(find.text('Generate Plan'), findsOneWidget);
 
     await _tapTab(tester, 'Progress');
-    expect(
-      find.text('Progress screen - arrives in a later milestone.'),
-      findsOneWidget,
-    );
+    await tester.pumpAndSettle();
+    expect(find.text('Total Study Time'), findsOneWidget);
+    expect(find.text('Sessions Completed'), findsOneWidget);
+    expect(find.text('0m'), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
