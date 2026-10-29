@@ -1,8 +1,8 @@
-# StudyFlow — Architecture
+# StudyFlow - Architecture
 
-- **Status:** Draft v0.1 — awaiting approval
+- **Status:** Draft v0.1 - awaiting approval
 - **Date:** 2026-10-29
-- **Related:** [Product requirements](product-requirements.md) · [Scheduling rules](scheduling-rules.md) · [Roadmap](roadmap.md)
+- **Related:** [Product requirements](product-requirements.md) - [Scheduling rules](scheduling-rules.md) - [Roadmap](roadmap.md)
 
 ---
 
@@ -35,7 +35,7 @@ Environment checked on 2026-10-29:
 | Emulator | `Pixel_7` AVD, Android 37.1 (Google APIs Play Store), x86_64, 2 GB RAM; WHPX acceleration available |
 | Devices now | No emulator running; Windows/Edge targets listed by Flutter but not used for this app |
 | Android licenses | `flutter doctor` reports some licenses not accepted; a scratch debug APK built successfully anyway. Run `flutter doctor --android-licenses` to clear the warning. |
-| Web/desktop | Chrome not installed; Visual Studio absent. Not required — the delivery target is Android. |
+| Web/desktop | Chrome not installed; Visual Studio absent. Not required - the delivery target is Android. |
 
 **Dependency validation performed:** a disposable Flutter Android project outside the workspace
 resolved the planned dependency set, generated Drift code, passed `flutter analyze`, and built a debug
@@ -53,7 +53,7 @@ Versions were checked on pub.dev on 2026-10-29. Use caret constraints as listed.
 |---|---|---|---|
 | `flutter` | 3.44.7 (SDK) | UI framework | Material 3, Android target |
 | `flutter_riverpod` | ^3.4.3 | State management and DI | Manual providers/Notifiers; no generator in v1 |
-| `go_router` | ^18.1.1 | Navigation | Requires Flutter ≥ 3.44; `StatefulShellRoute.indexedStack` |
+| `go_router` | ^18.1.1 | Navigation | Requires Flutter >= 3.44; `StatefulShellRoute.indexedStack` |
 | `drift` | ^2.35.3 | Typed SQLite access | Generated row classes and DAOs |
 | `drift_flutter` | ^0.3.1 | Database initialization | `driftDatabase(name: 'studyflow', native: DriftNativeOptions(shareAcrossIsolates: true))`; packages native SQLite and path resolution |
 | `uuid` | ^4.6.0 | Offline-safe IDs | Text UUIDs for all primary keys |
@@ -70,42 +70,42 @@ Versions were checked on pub.dev on 2026-10-29. Use caret constraints as listed.
 
 ### Deliberately not used in v1
 
-- `riverpod_generator` / `riverpod_annotation` — adds generated files without enough benefit for one
+- `riverpod_generator` / `riverpod_annotation` - adds generated files without enough benefit for one
   developer. Manual providers are explicit and easy to trace.
-- `freezed` / `json_serializable` — Drift already generates immutable row classes; no JSON layer.
-- `get_it`, `injectable` — Riverpod is the DI container.
-- Chart libraries — weekly bars are a small `CustomPainter`; avoids a heavy dependency.
-- Notification, calendar, cloud, analytics, and AI packages — out of scope.
-- `mocktail` — repositories are tested against in-memory SQLite; a fake clock covers time.
+- `freezed` / `json_serializable` - Drift already generates immutable row classes; no JSON layer.
+- `get_it`, `injectable` - Riverpod is the DI container.
+- Chart libraries - weekly bars are a small `CustomPainter`; avoids a heavy dependency.
+- Notification, calendar, cloud, analytics, and AI packages - out of scope.
+- `mocktail` - repositories are tested against in-memory SQLite; a fake clock covers time.
 
 ---
 
 ## 4. System overview
 
 ```
-┌──────────────────────────── Presentation (Flutter) ────────────────────────────┐
-│ Today · Goals · Schedule · Progress · Settings · Onboarding · Focus (fullscreen) │
-└───────────────▲───────────────────────────────────────────────▲─────────────────┘
-                │ watch streams / invoke controllers            │
-┌───────────────┴──────────────── Riverpod ─────────────────────┴─────────────────┐
-│ DB provider · repository providers · stream providers · Notifiers/controllers     │
-│ app lifecycle listeners · current-day provider                                    │
-└───────────────▲───────────────────────────────────────────────▲─────────────────┘
-                │                                               │
-┌───────────────┴──────────── Application services ──────────────┴────────────────┐
-│ PlanService · ReconciliationService · SessionService · RevisionService · Progress │
-└───────┬───────────────────────────────────────────────────────────▲───────────────┘
-        │ Drift rows / inputs                    pure PlanResult       │
-┌───────▼─────────────────────────┐          ┌───────────────────────┴──────────────┐
-│ Repositories & DAOs (SQLite)    │          │ core/scheduling — pure Dart           │
-│ AppDatabase (background isolate)│          │ splitter · allocator · feasibility     │
-└─────────────────────────────────┘          └───────────────────────────────────────┘
++---------------------------- Presentation (Flutter) ----------------------------+
+| Today - Goals - Schedule - Progress - Settings - Onboarding - Focus (fullscreen) |
++---------------^-----------------------------------------------^-----------------+
+                | watch streams / invoke controllers            |
++---------------+---------------- Riverpod ---------------------+-----------------+
+| DB provider - repository providers - stream providers - Notifiers/controllers     |
+| app lifecycle listeners - current-day provider                                    |
++---------------^-----------------------------------------------^-----------------+
+                |                                               |
++---------------+------------ Application services --------------+----------------+
+| PlanService - ReconciliationService - SessionService - RevisionService - Progress |
++-------+-----------------------------------------------------------^---------------+
+        | Drift rows / inputs                    pure PlanResult       |
++-------v-------------------------+          +-----------------------+--------------+
+| Repositories & DAOs (SQLite)    |          | core/scheduling - pure Dart           |
+| AppDatabase (background isolate)|          | splitter - allocator - feasibility     |
++---------------------------------+          +---------------------------------------+
                        Clock abstraction injected everywhere time is read
 ```
 
 ### Dependency rule
 
-`presentation → application → data` and `application → core/scheduling`. The scheduling core has **no
+`presentation -> application -> data` and `application -> core/scheduling`. The scheduling core has **no
 Flutter, Drift, Riverpod, or `DateTime.now()` dependency**. Repositories do not depend on Riverpod.
 The database is the single source of truth; UI state is derived from streams and service results.
 
@@ -113,13 +113,13 @@ The database is the single source of truth; UI state is derived from streams and
 
 ## 5. Architectural decisions
 
-### ADR-1 — Local SQLite via Drift is the only source of truth
+### ADR-1 - Local SQLite via Drift is the only source of truth
 
 All entities and sessions live in SQLite. There is no cache layer or server. Drift provides typed
 queries, migrations, transactions, and reactive streams. `drift_flutter` opens the database using the
 app's databases directory and `shareAcrossIsolates` so heavy reads/writes do not block the UI isolate.
 
-### ADR-2 — Pure, deterministic scheduling engine
+### ADR-2 - Pure, deterministic scheduling engine
 
 `lib/core/scheduling/` contains only Dart model types and algorithms. It receives a normalized snapshot
 (now, local dates, tasks, availability, locked sessions, settings) and returns sessions plus structured
@@ -127,7 +127,7 @@ warnings. It never reads the database, never calls `DateTime.now()`, and never g
 The service layer supplies IDs and persistence. This makes every rule unit-testable and guarantees
 replayable plans.
 
-### ADR-3 — Use Drift-generated row types as application models; separate engine inputs
+### ADR-3 - Use Drift-generated row types as application models; separate engine inputs
 
 Drift row classes are immutable generated data classes. Duplicating them into hand-written entities
 would add mapping code without improving this single-database app. Repositories expose Drift rows to
@@ -139,7 +139,7 @@ live in services and are covered by repository tests.
 **Trade-off:** UI code is coupled to Drift's generated naming. Accepted for simplicity; the database
 schema is the data model.
 
-### ADR-4 — Riverpod 3 with explicit providers, no codegen
+### ADR-4 - Riverpod 3 with explicit providers, no codegen
 
 - `Provider` for databases, repositories, services, clock.
 - `StreamProvider` for reactive queries (goals, today's sessions, progress).
@@ -148,20 +148,20 @@ schema is the data model.
 Manual providers keep the wiring visible. Provider scope is only used where needed to prevent
 unnecessary rebuilds (`ref.watch(provider.select(...))`).
 
-### ADR-5 — go_router with a stateful shell
+### ADR-5 - go_router with a stateful shell
 
 Four top-level destinations in a `StatefulShellRoute.indexedStack`: Today, Goals, Schedule, Progress.
 Settings is a route reachable from app bars. The focus timer is a full-screen route outside the shell.
 This preserves scroll/state per tab and avoids rebuilding tabs during navigation.
 
-### ADR-6 — Local wall-clock date + minute-of-day for planning
+### ADR-6 - Local wall-clock date + minute-of-day for planning
 
 Study windows and deadlines are local calendar concepts, not instants. A session is stored as
 `session_date` (`YYYY-MM-DD` local date) plus `start_minute`/`planned_minutes`, both integers. This
 makes overlap and capacity arithmetic exact and avoids timezone/DST conversion bugs. Actual events
 (timer start, completion) are stored as UTC epoch milliseconds for audit. Windows cannot cross midnight.
 
-### ADR-7 — Plan runs are transactional and replace only future planned sessions
+### ADR-7 - Plan runs are transactional and replace only future planned sessions
 
 `ReconciliationService` marks eligible past sessions as missed. `PlanService.replan()` then computes a
 plan and replaces only future sessions with status `scheduled` in one transaction; it does not own missed
@@ -169,13 +169,13 @@ detection. `in_progress`, `completed`, `missed`, and learner-cancelled rows are 
 If plan generation fails, the transaction rolls back and the previous plan remains. A single-flight lock
 prevents concurrent replans.
 
-### ADR-8 — Warnings are derived, not persisted
+### ADR-8 - Warnings are derived, not persisted
 
 Feasibility results are a pure function of current inputs. They are recomputed when the plan is rebuilt
 and when a task/deadline is previewed. This avoids stale warning rows and schema noise. The session rows
 represent the committed plan; warnings are explanatory UI state.
 
-### ADR-9 — Timestamp-based timer with persisted state
+### ADR-9 - Timestamp-based timer with persisted state
 
 The timer does not count in the background. It stores `timer_accumulated_seconds` and
 `timer_resumed_at_utc` on the session; elapsed time is computed from the clock. Pausing accumulates
@@ -183,7 +183,7 @@ seconds; resuming sets the timestamp; finishing writes actual minutes. UI tickin
 stops when the screen is not visible. No foreground service, notification permission, or exact-alarm
 access is required in v1.
 
-### ADR-10 — Local-only privacy posture
+### ADR-10 - Local-only privacy posture
 
 The release build should not declare `INTERNET`; Android auto-backup is disabled
 (`android:allowBackup="false"`) to match the "data stays on this device" promise. No analytics SDK,
@@ -196,84 +196,84 @@ stored.
 
 ```
 StudyFlow/
-├── android/                          # Generated Android host project (applicationId edited)
-├── docs/                             # This documentation set
-├── integration_test/
-│   └── app_flow_test.dart
-├── lib/
-│   ├── main.dart                     # ProviderScope, bootstrap, runApp
-│   ├── app/
-│   │   ├── app.dart                  # MaterialApp.router
-│   │   ├── providers.dart            # App-wide providers (clock, DB, services)
-│   │   ├── lifecycle.dart            # Resume/midnight hooks for reconciliation
-│   │   ├── router/
-│   │   │   ├── app_router.dart
-│   │   │   └── routes.dart           # Path constants and helpers
-│   │   └── theme/
-│   │       ├── app_theme.dart
-│   │       └── app_tokens.dart       # Spacing, radii, semantic colors
-│   ├── application/
-│   │   ├── plan_service.dart         # Replan pipeline, replace-future-sessions transaction
-│   │   ├── reconciliation_service.dart
-│   │   ├── session_service.dart      # Start/pause/finish/manual completion
-│   │   ├── revision_service.dart     # Learned-topic → revision tasks (idempotent)
-│   │   └── progress_service.dart     # Pure aggregation queries
-│   ├── core/
-│   │   ├── time/
-│   │   │   ├── clock.dart            # Clock, SystemClock
-│   │   │   └── local_date.dart       # LocalDate, weekday, date-only arithmetic
-│   │   ├── scheduling/
-│   │   │   ├── scheduling_models.dart
-│   │   │   ├── session_splitter.dart
-│   │   │   ├── study_scheduler.dart
-│   │   │   ├── feasibility.dart
-│   │   │   └── revision_policy.dart
-│   │   ├── formatting/formatters.dart # "1h 25m", dates, minute-of-day
-│   │   └── validation.dart            # Shared input validation
-│   ├── data/
-│   │   ├── database/
-│   │   │   ├── app_database.dart
-│   │   │   ├── app_database.g.dart    # Generated (committed)
-│   │   │   ├── tables.dart
-│   │   │   ├── daos/
-│   │   │   │   ├── goal_dao.dart
-│   │   │   │   ├── subject_dao.dart
-│   │   │   │   ├── topic_dao.dart
-│   │   │   │   ├── task_dao.dart
-│   │   │   │   ├── session_dao.dart
-│   │   │   │   ├── availability_dao.dart
-│   │   │   │   └── settings_dao.dart
-│   │   │   └── migrations/            # Schema export + future migrations
-│   │   └── repositories/
-│   │       ├── goal_repository.dart
-│   │       ├── subject_repository.dart
-│   │       ├── topic_repository.dart
-│   │       ├── task_repository.dart
-│   │       ├── session_repository.dart
-│   │       ├── availability_repository.dart
-│   │       └── settings_repository.dart
-│   ├── features/
-│   │   ├── onboarding/               # Availability setup + first goal
-│   │   ├── today/                    # Daily dashboard, session cards
-│   │   ├── goals/                    # Goal/subject/topic browse + forms
-│   │   ├── tasks/                    # Task form, details, feasibility panel
-│   │   ├── schedule/                 # Week/horizon view, warnings, rebuild action
-│   │   ├── focus/                    # Full-screen timer, actual-minutes sheet
-│   │   ├── progress/                 # Weekly bars, subject/goal summaries
-│   │   └── settings/                 # Availability, planning, revisions, appearance
-│   ├── shared/
-│   │   ├── widgets/                  # App scaffolds, empty/error states, duration chips
-│   │   └── extensions/
-│   └── l10n/                         # Reserved; English strings centralized now
-├── test/
-│   ├── core/scheduling/              # Hardest tests: tables of scenarios
-│   ├── core/time/
-│   ├── data/                         # In-memory SQLite repository tests
-│   ├── application/
-│   ├── features/                     # Widget tests
-│   └── helpers/                      # FakeClock, test DB, builders
-├── analysis_options.yaml
-└── pubspec.yaml
++-- android/                          # Generated Android host project (applicationId edited)
++-- docs/                             # This documentation set
++-- integration_test/
+|   +-- app_flow_test.dart
++-- lib/
+|   +-- main.dart                     # ProviderScope, bootstrap, runApp
+|   +-- app/
+|   |   +-- app.dart                  # MaterialApp.router
+|   |   +-- providers.dart            # App-wide providers (clock, DB, services)
+|   |   +-- lifecycle.dart            # Resume/midnight hooks for reconciliation
+|   |   +-- router/
+|   |   |   +-- app_router.dart
+|   |   |   +-- routes.dart           # Path constants and helpers
+|   |   +-- theme/
+|   |       +-- app_theme.dart
+|   |       +-- app_tokens.dart       # Spacing, radii, semantic colors
+|   +-- application/
+|   |   +-- plan_service.dart         # Replan pipeline, replace-future-sessions transaction
+|   |   +-- reconciliation_service.dart
+|   |   +-- session_service.dart      # Start/pause/finish/manual completion
+|   |   +-- revision_service.dart     # Learned-topic -> revision tasks (idempotent)
+|   |   +-- progress_service.dart     # Pure aggregation queries
+|   +-- core/
+|   |   +-- time/
+|   |   |   +-- clock.dart            # Clock, SystemClock
+|   |   |   +-- local_date.dart       # LocalDate, weekday, date-only arithmetic
+|   |   +-- scheduling/
+|   |   |   +-- scheduling_models.dart
+|   |   |   +-- session_splitter.dart
+|   |   |   +-- study_scheduler.dart
+|   |   |   +-- feasibility.dart
+|   |   |   +-- revision_policy.dart
+|   |   +-- formatting/formatters.dart # "1h 25m", dates, minute-of-day
+|   |   +-- validation.dart            # Shared input validation
+|   +-- data/
+|   |   +-- database/
+|   |   |   +-- app_database.dart
+|   |   |   +-- app_database.g.dart    # Generated (committed)
+|   |   |   +-- tables.dart
+|   |   |   +-- daos/
+|   |   |   |   +-- goal_dao.dart
+|   |   |   |   +-- subject_dao.dart
+|   |   |   |   +-- topic_dao.dart
+|   |   |   |   +-- task_dao.dart
+|   |   |   |   +-- session_dao.dart
+|   |   |   |   +-- availability_dao.dart
+|   |   |   |   +-- settings_dao.dart
+|   |   |   +-- migrations/            # Schema export + future migrations
+|   |   +-- repositories/
+|   |       +-- goal_repository.dart
+|   |       +-- subject_repository.dart
+|   |       +-- topic_repository.dart
+|   |       +-- task_repository.dart
+|   |       +-- session_repository.dart
+|   |       +-- availability_repository.dart
+|   |       +-- settings_repository.dart
+|   +-- features/
+|   |   +-- onboarding/               # Availability setup + first goal
+|   |   +-- today/                    # Daily dashboard, session cards
+|   |   +-- goals/                    # Goal/subject/topic browse + forms
+|   |   +-- tasks/                    # Task form, details, feasibility panel
+|   |   +-- schedule/                 # Week/horizon view, warnings, rebuild action
+|   |   +-- focus/                    # Full-screen timer, actual-minutes sheet
+|   |   +-- progress/                 # Weekly bars, subject/goal summaries
+|   |   +-- settings/                 # Availability, planning, revisions, appearance
+|   +-- shared/
+|   |   +-- widgets/                  # App scaffolds, empty/error states, duration chips
+|   |   +-- extensions/
+|   +-- l10n/                         # Reserved; English strings centralized now
++-- test/
+|   +-- core/scheduling/              # Hardest tests: tables of scenarios
+|   +-- core/time/
+|   +-- data/                         # In-memory SQLite repository tests
+|   +-- application/
+|   +-- features/                     # Widget tests
+|   +-- helpers/                      # FakeClock, test DB, builders
++-- analysis_options.yaml
++-- pubspec.yaml
 ```
 
 Feature folders contain `presentation/` (screens/widgets) and `providers/` (feature-scoped Riverpod
@@ -293,7 +293,7 @@ Foreign keys are enabled per connection.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | TEXT PK | UUID |
-| `title` | TEXT NOT NULL | 1–120 chars, trimmed |
+| `title` | TEXT NOT NULL | 1-120 chars, trimmed |
 | `description` | TEXT NULL | Optional |
 | `target_date` | TEXT NULL | Local ISO date `YYYY-MM-DD`; informational |
 | `color_index` | INTEGER NOT NULL | Index into a fixed accessible palette |
@@ -306,7 +306,7 @@ Foreign keys are enabled per connection.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | TEXT PK | UUID |
-| `goal_id` | TEXT NOT NULL FK → `goals.id` RESTRICT | |
+| `goal_id` | TEXT NOT NULL FK -> `goals.id` RESTRICT | |
 | `title` | TEXT NOT NULL | |
 | `notes` | TEXT NULL | |
 | `sort_order` | INTEGER NOT NULL | |
@@ -320,7 +320,7 @@ Index: `(goal_id, status)`.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | TEXT PK | UUID |
-| `subject_id` | TEXT NOT NULL FK → `subjects.id` RESTRICT | |
+| `subject_id` | TEXT NOT NULL FK -> `subjects.id` RESTRICT | |
 | `title` | TEXT NOT NULL | |
 | `notes` | TEXT NULL | |
 | `status` | TEXT NOT NULL | `not_started`, `learning`, `learned`, `archived` |
@@ -336,12 +336,12 @@ Index: `(subject_id, status)`.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | TEXT PK | UUID |
-| `topic_id` | TEXT NOT NULL FK → `topics.id` RESTRICT | |
+| `topic_id` | TEXT NOT NULL FK -> `topics.id` RESTRICT | |
 | `title` | TEXT NOT NULL | |
 | `notes` | TEXT NULL | |
 | `kind` | TEXT NOT NULL | `study`, `revision` |
 | `priority` | INTEGER NOT NULL | 0 = low, 1 = normal, 2 = high |
-| `estimate_minutes` | INTEGER NOT NULL | 5–2400 |
+| `estimate_minutes` | INTEGER NOT NULL | 5-2400 |
 | `remaining_minutes` | INTEGER NOT NULL | 0..estimate initially; reduced only by logged actual time or manual completion |
 | `deadline_date` | TEXT NULL | Local ISO date, inclusive |
 | `not_before_date` | TEXT NULL | Used by revision tasks; engine never schedules earlier |
@@ -364,11 +364,11 @@ learned afterward.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | TEXT PK | UUID |
-| `task_id` | TEXT NOT NULL FK → `tasks.id` RESTRICT | |
+| `task_id` | TEXT NOT NULL FK -> `tasks.id` RESTRICT | |
 | `session_date` | TEXT NOT NULL | Local ISO date |
-| `start_minute` | INTEGER NOT NULL | Minutes since local midnight, 0–1439 |
-| `planned_minutes` | INTEGER NOT NULL | > 0; `start_minute + planned_minutes ≤ 1440` |
-| `actual_minutes` | INTEGER NULL | Set on completion, ≥ 1 |
+| `start_minute` | INTEGER NOT NULL | Minutes since local midnight, 0-1439 |
+| `planned_minutes` | INTEGER NOT NULL | > 0; `start_minute + planned_minutes <= 1440` |
+| `actual_minutes` | INTEGER NULL | Set on completion, >= 1 |
 | `status` | TEXT NOT NULL | `scheduled`, `in_progress`, `completed`, `missed`, `cancelled` |
 | `started_at_utc` | INTEGER NULL | Timer start (UTC ms) |
 | `completed_at_utc` | INTEGER NULL | Completion (UTC ms) |
@@ -382,9 +382,9 @@ No overlap is expressible as a simple SQLite constraint, so it is guaranteed by 
 defended in `SessionRepository` before any session insert/update.
 
 **Session lifecycle:** `completed` and `missed` rows are never deleted or rescheduled. Replanning deletes
-only future `scheduled` rows, which are ephemeral plan projections. A learner-initiated “cancel session”
+only future `scheduled` rows, which are ephemeral plan projections. A learner-initiated "cancel session"
 marks the row `cancelled` and keeps it for audit; completing, cancelling, or archiving a task deletes that
-task’s future `scheduled` rows but retains past and learner-cancelled rows. No code path deletes completed
+task's future `scheduled` rows but retains past and learner-cancelled rows. No code path deletes completed
 or missed rows.
 
 ### `availability_windows`
@@ -392,9 +392,9 @@ or missed rows.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | TEXT PK | UUID |
-| `weekday` | INTEGER NOT NULL | 1 = Monday … 7 = Sunday (ISO-8601) |
+| `weekday` | INTEGER NOT NULL | 1 = Monday ... 7 = Sunday (ISO-8601) |
 | `start_minute` | INTEGER NOT NULL | |
-| `end_minute` | INTEGER NOT NULL | > start, ≤ 1440; no cross-midnight |
+| `end_minute` | INTEGER NOT NULL | > start, <= 1440; no cross-midnight |
 | `created_at`, `updated_at` | INTEGER NOT NULL | |
 
 Validation prevents overlapping windows on the same weekday. Index: `(weekday)`.
@@ -404,13 +404,13 @@ Validation prevents overlapping windows on the same weekday. Index: `(weekday)`.
 | Column | Default | Notes |
 |---|---|---|
 | `id` | 1 | CHECK `id = 1` |
-| `daily_limit_minutes` | 120 | 15–720 |
-| `block_length_minutes` | 50 | 15–120; preferred maximum session size |
-| `min_session_minutes` | 15 | ≥ 5 and ≤ `block_length_minutes / 2` |
-| `break_minutes` | 10 | 0–30 |
-| `horizon_days` | 14 | 7–30 |
+| `daily_limit_minutes` | 120 | 15-720 |
+| `block_length_minutes` | 50 | 15-120; preferred maximum session size |
+| `min_session_minutes` | 15 | >= 5 and <= `block_length_minutes / 2` |
+| `break_minutes` | 10 | 0-30 |
+| `horizon_days` | 14 | 7-30 |
 | `revision_preset` | `standard` | `off`, `light`, `standard` |
-| `revision_length_minutes` | 25 | 10–60 |
+| `revision_length_minutes` | 25 | 10-60 |
 | `auto_replan` | 1 | Boolean |
 | `theme_mode` | `system` | `system`, `light`, `dark` |
 | `dynamic_color` | 1 | Android 12+ only |
@@ -437,23 +437,23 @@ Constraints are also enforced in repositories and mirrored in the UI to give imm
 
 ```
 App start / resume / midnight / edit / manual rebuild
-        │
-        ▼
-ReconciliationService ── mark past scheduled sessions as missed (except in_progress)
-        │
-        ▼
+        |
+        v
+ReconciliationService -- mark past scheduled sessions as missed (except in_progress)
+        |
+        v
 PlanService (single-flight)
-  ├─ Load snapshot: open tasks, settings, availability, completed rows in the horizon, and locked sessions
-  ├─ Map rows → pure engine inputs (LocalDate, minutes)
-  ├─ StudyScheduler.plan(inputs) → PlannedSession[] + warnings
-  ├─ Transaction:
-  │    delete future unlocked `scheduled` sessions
-  │    insert new sessions (UUIDs attached by the service)
-  │    update `last_plan_at`; clear `plan_stale`
-  └─ Return plan summary + warnings
-        │
-        ▼
-Riverpod streams emit → Today/Schedule/Task details update
+  +- Load snapshot: open tasks, settings, availability, completed rows in the horizon, and locked sessions
+  +- Map rows -> pure engine inputs (LocalDate, minutes)
+  +- StudyScheduler.plan(inputs) -> PlannedSession[] + warnings
+  +- Transaction:
+  |    delete future unlocked `scheduled` sessions
+  |    insert new sessions (UUIDs attached by the service)
+  |    update `last_plan_at`; clear `plan_stale`
+  +- Return plan summary + warnings
+        |
+        v
+Riverpod streams emit -> Today/Schedule/Task details update
 ```
 
 - Plan generation itself is pure and synchronous; for the expected data size (hundreds of tasks over
@@ -478,15 +478,15 @@ Riverpod streams emit → Today/Schedule/Task details update
 | App cold start | Yes | If auto-replan enabled |
 | App resume after time away | Yes | If auto-replan enabled |
 | Midnight while open | Yes | If auto-replan enabled |
-| Task create/edit/deadline/priority/estimate | — | If auto-replan enabled |
-| Availability or planning (limit/block/min/break/horizon) settings change | — | If auto-replan enabled |
-| Revision preset or length change | — | No replan; affects only future revision generation |
-| Topic marked learned | — | Start a cycle if unset; generate revisions per preset; replan if auto |
-| Focus session finished (partial) | — | If auto-replan enabled; otherwise mark plan stale |
-| Stale timer resolved (finish or discard) | — | Completion/cancellation path; replan if auto |
-| Task manually completed | — | Remove its future `scheduled` rows; replan if auto |
-| Task cancelled or archived | — | Remove its future `scheduled` rows; replan if auto |
-| Goal archive/complete, subject/topic archive, or topic unlearn | — | Lifecycle removals; replan if auto |
+| Task create/edit/deadline/priority/estimate | - | If auto-replan enabled |
+| Availability or planning (limit/block/min/break/horizon) settings change | - | If auto-replan enabled |
+| Revision preset or length change | - | No replan; affects only future revision generation |
+| Topic marked learned | - | Start a cycle if unset; generate revisions per preset; replan if auto |
+| Focus session finished (partial) | - | If auto-replan enabled; otherwise mark plan stale |
+| Stale timer resolved (finish or discard) | - | Completion/cancellation path; replan if auto |
+| Task manually completed | - | Remove its future `scheduled` rows; replan if auto |
+| Task cancelled or archived | - | Remove its future `scheduled` rows; replan if auto |
+| Goal archive/complete, subject/topic archive, or topic unlearn | - | Lifecycle removals; replan if auto |
 | Auto-replan off | Yes on start/resume/midnight | No automatic plan run; lifecycle removals only; manual via "Rebuild plan" |
 
 When auto-replan is off, any event that would trigger an automatic plan run sets `plan_stale = 1` but
@@ -499,29 +499,29 @@ explicitly.
 
 ```
 Clock (SystemClock / FakeClock)
-  └─ clockProvider
+  +- clockProvider
 
 AppDatabase
-  └─ databaseProvider (owns lifecycle; closes on dispose)
+  +- databaseProvider (owns lifecycle; closes on dispose)
 
 Repositories (Goal, Subject, Topic, Task, Session, Availability, Settings)
-  └─ repository providers (depend on database)
+  +- repository providers (depend on database)
 
 Services (PlanService, ReconciliationService, SessionService, RevisionService)
-  └─ service providers (depend on repositories + clock)
+  +- service providers (depend on repositories + clock)
 
 Read models
-  ├─ goalsProvider            StreamProvider<List<Goal>>
-  ├─ todaySessionsProvider    StreamProvider<List<SessionWithTask>>
-  ├─ upcomingSessionsProvider StreamProvider<List<...>>
-  ├─ settingsProvider         StreamProvider<AppSettings>
-  └─ progressProvider         StreamProvider<ProgressSnapshot> (SQL aggregation)
+  +- goalsProvider            StreamProvider<List<Goal>>
+  +- todaySessionsProvider    StreamProvider<List<SessionWithTask>>
+  +- upcomingSessionsProvider StreamProvider<List<...>>
+  +- settingsProvider         StreamProvider<AppSettings>
+  +- progressProvider         StreamProvider<ProgressSnapshot> (SQL aggregation)
 
 Commands / ephemeral state
-  ├─ taskFormController       AsyncNotifier (validation + save)
-  ├─ planController           AsyncNotifier<PlanSummary> (rebuild, warnings, stale flag)
-  ├─ sessionActionController  AsyncNotifier (complete/cancel)
-  └─ timerController          Notifier<TimerState> (persisted timer, UI ticker)
+  +- taskFormController       AsyncNotifier (validation + save)
+  +- planController           AsyncNotifier<PlanSummary> (rebuild, warnings, stale flag)
+  +- sessionActionController  AsyncNotifier (complete/cancel)
+  +- timerController          Notifier<TimerState> (persisted timer, UI ticker)
 ```
 
 - Screens `watch` read models and call controller methods. They never use the database directly.
@@ -539,21 +539,21 @@ Commands / ephemeral state
 
 ```
 StatefulShellRoute.indexedStack
-├── /today
-├── /goals
-│   └── /goals/:goalId
-│       └── /goals/:goalId/subjects/:subjectId
-│           └── /goals/:goalId/subjects/:subjectId/topics/:topicId
-│               ├── .../tasks/new
-│               └── .../tasks/:taskId
-├── /schedule
-└── /progress
++-- /today
++-- /goals
+|   +-- /goals/:goalId
+|       +-- /goals/:goalId/subjects/:subjectId
+|           +-- /goals/:goalId/subjects/:subjectId/topics/:topicId
+|               +-- .../tasks/new
+|               +-- .../tasks/:taskId
++-- /schedule
++-- /progress
 
 /settings                  Settings root (outside the shell, reached from app bars)
-├── /settings/availability
-├── /settings/planning
-├── /settings/revisions
-└── /settings/appearance
++-- /settings/availability
++-- /settings/planning
++-- /settings/revisions
++-- /settings/appearance
 
 /focus/:sessionId          Full-screen timer (outside the shell)
 /setup                     First-run availability setup (outside the shell)
@@ -577,7 +577,7 @@ Lifecycle:
 1. **Start:** session must be today's session and not completed, missed, or cancelled. Set `in_progress`,
    `started_at_utc = now`, `timer_accumulated_seconds = 0`, `timer_resumed_at_utc = now`. Enforce at
    most one `in_progress` session globally.
-2. **Pause:** add `now − timer_resumed_at_utc` to accumulated; clear resumed timestamp. Persist.
+2. **Pause:** add `now - timer_resumed_at_utc` to accumulated; clear resumed timestamp. Persist.
 3. **Resume:** set resumed timestamp. Persist.
 4. **UI tick:** compute elapsed from accumulated + running delta; display countdown from
    `planned_minutes` (can go negative and show overtime if the learner keeps going).
@@ -594,13 +594,13 @@ Lifecycle:
    guarantees an abandoned timer always has an exit and cannot silently consume capacity forever. The app
    never auto-credits unconfirmed time.
 8. **Abandon/cancel:** marks the session `cancelled` without counting time, retains the row for audit,
-   and lets the next plan reschedule the task’s remaining work. Marking a scheduled session missed is a
+   and lets the next plan reschedule the task's remaining work. Marking a scheduled session missed is a
    reconcile outcome, not a timer action. Only transitions allowed by the session state machine are
    exposed.
 
 Manual completion without a timer uses the same transaction path with actual minutes entered by the
-learner. Completing, cancelling, or archiving a task — or editing its estimate in a way that would
-complete it — is blocked while one of its sessions is `in_progress`; the timer must be finished or
+learner. Completing, cancelling, or archiving a task - or editing its estimate in a way that would
+complete it - is blocked while one of its sessions is `in_progress`; the timer must be finished or
 discarded first. Session state transitions are centralized in `SessionService`; widgets never write
 directly.
 
@@ -610,7 +610,7 @@ directly.
 
 - **Input validation:** constraints live in `core/validation.dart` and are used by forms and
   repositories. Examples: title lengths, estimate range, availability window ordering/overlap,
-  min session ≤ half the block length, deadline/earliest-date coherence.
+  min session <= half the block length, deadline/earliest-date coherence.
 - **Errors:** repositories throw typed exceptions (`ValidationException`, `ConflictException`);
   controllers translate them to inline field errors or snackbars. Unexpected errors show a retry
   affordance and are never swallowed.
@@ -639,7 +639,7 @@ directly.
   and excluding semantics for decorative elements.
 - **Large text:** use flexible layouts, wrap durations, and avoid fixed-height rows. Widget tests render
   core screens at 200% text scale and fail on overflow.
-- **Touch targets:** minimum 48×48 dp; swipe actions always have a visible alternative.
+- **Touch targets:** minimum 48x48 dp; swipe actions always have a visible alternative.
 - **Reduce motion:** read `MediaQuery.disableAnimations` and skip non-essential transitions.
 - **Color independence:** priority uses icon + label; status uses labels; feasibility uses icon + text.
 
@@ -649,12 +649,12 @@ directly.
 
 | Layer | Approach |
 |---|---|
-| Scheduling core | Pure Dart unit tests with table-driven scenarios and golden outputs (excluding IDs). Fake clock only where the engine needs a `now` snapshot. ≥ 90% branch coverage. |
+| Scheduling core | Pure Dart unit tests with table-driven scenarios and golden outputs (excluding IDs). Fake clock only where the engine needs a `now` snapshot. >= 90% branch coverage. |
 | Date/time | Unit tests for `LocalDate`, weekday mapping, inclusive deadlines, minute-of-day formatting, DST-insensitive math. |
 | Repositories/DAOs | In-memory SQLite (`NativeDatabase.memory()`) tests for CRUD, FK restrictions, unique revision stages, transactions, missed-session marking, immutability of completed rows. |
 | Application services | Tests for plan replacement, partial completion, remaining-minute math, auto-replan triggers, stale-flag set/clear, single-flight behavior. |
 | Widgets | Provider overrides with test DB/fake clock; form validation; Today/Schedule states; timer UI with fake clock; 200% text; semantics. |
-| Integration | One end-to-end flow on Android: setup → goal/subject/topic/task → plan → complete/miss → progress. |
+| Integration | One end-to-end flow on Android: setup -> goal/subject/topic/task -> plan -> complete/miss -> progress. |
 
 - Test helpers: `FakeClock`, `createTestDatabase()`, entity builders, and a `pumpApp()` wrapper with
   `ProviderScope`.
@@ -728,17 +728,18 @@ flutter build apk --debug
 
 ---
 
-## 19. Open architectural questions for approval
+## 19. Resolved architectural decisions
 
-1. **Application ID:** `com.studyflow.app` proposed. It must be confirmed before any release.
-2. **Repository initialization:** `git init` and an initial commit of this documentation are
-   recommended before application code exists.
-3. **Schema scope:** weekly availability only (no per-date exceptions) and date-only deadlines, as in
-   the PRD. Confirm before schema v1 is frozen.
-4. **Deletion policy:** archive when history exists; hard-delete only empty containers with no dependent
-   rows or history. Cancelled tasks remain in history. Confirm the UX wording.
+Approved on 2026-10-29. These decisions are binding for v1.
+
+1. **Application ID:** `com.studyflow.studyflow`. Applied to the Android scaffold.
+2. **Repository initialization:** done; the repository and this documentation are committed.
+3. **Schema scope:** weekly availability only, with no per-date exceptions; deadlines are date-only and
+   inclusive through the end of the day.
+4. **Deletion policy:** archive containers when history exists; hard-delete only empty containers with
+   no dependent rows or history. Cancelled tasks remain in history.
 5. **Auto-replan default:** enabled, with an in-app summary of moved sessions and an opt-out setting.
-6. **Android auto-backup:** disabled to honor local-only data; no export in v1. Confirm you accept the
-   “uninstall deletes data” trade-off.
-7. **Revision lifecycle:** one cycle per topic; re-learning does not regenerate revisions, and preset
-   changes apply only to newly learned topics in v1. Confirm this is acceptable for the first release.
+6. **Android auto-backup:** disabled to honor the local-only posture; uninstalling deletes data and v1
+   has no export.
+7. **Revision lifecycle:** one cycle per topic; re-learning does not regenerate revisions; preset
+   changes apply only to newly learned topics in v1.

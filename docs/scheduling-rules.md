@@ -1,8 +1,8 @@
-# StudyFlow — Scheduling Rules
+# StudyFlow - Scheduling Rules
 
-- **Status:** Draft v0.1 — awaiting approval
+- **Status:** Draft v0.1 - awaiting approval
 - **Date:** 2026-10-29
-- **Related:** [Product requirements](product-requirements.md) · [Architecture](architecture.md) · [Roadmap](roadmap.md)
+- **Related:** [Product requirements](product-requirements.md) - [Architecture](architecture.md) - [Roadmap](roadmap.md)
 - **Engine location:** `lib/core/scheduling/` (pure Dart)
 
 This document is the contract for the deterministic scheduler. Implementation and tests must follow it.
@@ -18,24 +18,24 @@ When a rule changes, update this document first.
 |---|---|
 | **HC-1** | No two session blocks overlap on the same local date: new sessions never intersect planned, active, or in-progress blocks, and are never placed inside a completed session's recorded interval. Actual study beyond a plan is learner-controlled; the planner never creates planned overlaps and treats `max(planned, actual)` as occupied when replanning. |
 | **HC-2** | Every generated session lies entirely inside one availability window on its date. No session crosses midnight. |
-| **HC-3** | For each day: `logged minutes + active/in-progress reserved minutes + newly planned minutes ≤ daily study limit`. Deliberate learner overtime can exceed the limit after the fact; the planner never schedules beyond it. |
+| **HC-3** | For each day: `logged minutes + active/in-progress reserved minutes + newly planned minutes <= daily study limit`. Deliberate learner overtime can exceed the limit after the fact; the planner never schedules beyond it. |
 | **HC-4** | New planned minutes + active/in-progress committed minutes for a task never exceed that task's remaining minutes. |
 | **HC-5** | No session is planned before `now` (rounded up to the next 5-minute mark; an already-aligned minute is unchanged) or before an eligibility date (`not_before_date`). |
 | **HC-6** | For a task whose deadline is today or in the future, no new session is planned after the deadline date (inclusive through 23:59 local time). |
-| **HC-7** | Generated sessions start at the beginning of a free slot and never before the rounded “now”. Consecutive sessions within the same merged availability window are separated by at least the configured break. |
+| **HC-7** | Generated sessions start at the beginning of a free slot and never before the rounded "now". Consecutive sessions within the same merged availability window are separated by at least the configured break. |
 | **HC-8** | Completed and missed sessions are never modified or deleted by planning. Replanning only replaces future `scheduled` rows; learner-cancelled rows are retained but never planned. |
-| **HC-9** | The same inputs (including the same injected “now”) always produce the same session dates, start minutes, and durations. IDs are assigned afterward and do not affect the layout. |
+| **HC-9** | The same inputs (including the same injected "now") always produce the same session dates, start minutes, and durations. IDs are assigned afterward and do not affect the layout. |
 | **HC-10** | A task with a future deadline inside the planning horizon either receives all its schedulable remaining time before the deadline or produces a structured feasibility warning. Unplanned work is never silently dropped. |
 
 ### What the engine deliberately does *not* do
 
 - No randomness, scoring, machine learning, or external service.
 - No automatic overtime prevention. If a learner keeps a timer running, actual time can exceed the plan.
-- No time-of-day preference beyond “earliest available slot inside the user’s windows.”
+- No time-of-day preference beyond "earliest available slot inside the user's windows."
 - No cross-task optimization beyond deterministic priority order. Earlier tasks can consume capacity that a
   later task might have wanted; the feasibility report makes this visible.
 - No per-date availability exceptions in v1 (weekly windows only).
-- No hard deadlines are generated for revisions in v1; a learner may add one manually (see §10).
+- No hard deadlines are generated for revisions in v1; a learner may add one manually (see Section 10).
 
 ---
 
@@ -45,21 +45,21 @@ When a rule changes, update this document first.
   as `YYYY-MM-DD`. All scheduling uses local dates; no UTC conversion for planning.
 - **Minute of day:** integer `0..1440`, where `0` is 00:00. An end minute may be `1440` (midnight at the
   end of that date); a start minute must be `< 1440`.
-- **Weekday:** ISO-8601: Monday = 1 … Sunday = 7.
+- **Weekday:** ISO-8601: Monday = 1 ... Sunday = 7.
 - **Units:** all durations are whole minutes. All comparisons use integers to avoid floating-point drift.
 - **Deadlines:** date-only and inclusive. A deadline of 2026-10-31 means work must end by 23:59 on
   October 31, local time. There are no time-of-day deadlines in v1.
 - **Eligibility date:** `not_before_date` is a local date. A task cannot be scheduled earlier than it.
-- **“Now”:** supplied by the injected `Clock` as a local date plus minute of day. The engine never calls
-  `DateTime.now()`. For today, the earliest start is `ceilTo5(nowMinute) = 5 × ceil(nowMinute / 5)`; an
+- **"Now":** supplied by the injected `Clock` as a local date plus minute of day. The engine never calls
+  `DateTime.now()`. For today, the earliest start is `ceilTo5(nowMinute) = 5 x ceil(nowMinute / 5)`; an
   already-aligned minute is unchanged. If the result is 1440, today has no remaining planning capacity.
   Planning works at minute granularity: a session may begin at the current minute while the clock is
   partway through it. Timers record seconds separately, and learners start sessions explicitly.
 - **Time zones / DST:** sessions are defined in local wall-clock terms. DST transitions do not alter
   stored dates or start minutes. Actual timer timestamps are stored in UTC. Changing the device time zone
-  between plan runs can shift when a local date “happens”; v1 treats the current local date as the truth
+  between plan runs can shift when a local date "happens"; v1 treats the current local date as the truth
   and replans.
-- **No cross-midnight windows:** availability windows must satisfy `0 ≤ start < end ≤ 1440`. A learner
+- **No cross-midnight windows:** availability windows must satisfy `0 <= start < end <= 1440`. A learner
   who studies past midnight defines a separate window on the next day.
 
 ---
@@ -108,7 +108,7 @@ elapsedMinutes?                // optional current elapsed for in-progress
 ```
 
 Repository/service mapping filters out cancelled, missed, and future `scheduled` sessions (those are
-replaced) and retains active today’s scheduled sessions. Every completed or in-progress row is passed as a
+replaced) and retains active today's scheduled sessions. Every completed or in-progress row is passed as a
 lock, including an in-progress session from an earlier date (a stale timer); completed rows on dates
 outside the horizon may be omitted because they cannot affect future placement.
 
@@ -133,11 +133,11 @@ successful computation. Sessions are returned sorted by `(date, startMinute)`.
 
 A session is locked for planning if its status is one of:
 
-1. **Completed** — on any date within the horizon.
-2. **In progress** — always locked, including a stale timer whose date is before today; there is at most
+1. **Completed** - on any date within the horizon.
+2. **In progress** - always locked, including a stale timer whose date is before today; there is at most
    one globally.
-3. **Active scheduled today** — status `scheduled`, date is today, and
-   `startMinute ≤ nowMinute < endMinute`. The learner has not started it, but the time block has begun;
+3. **Active scheduled today** - status `scheduled`, date is today, and
+   `startMinute <= nowMinute < endMinute`. The learner has not started it, but the time block has begun;
    it is kept stable rather than deleted by a replan.
 
 Missed and cancelled sessions are history but never affect future capacity. Future `scheduled` sessions
@@ -145,7 +145,7 @@ are replaced by the plan and are not locks. `in_progress` sessions are never rem
 replan.
 
 A stale in-progress session (date before today) consumes no future capacity because its date is past, but
-it reserves the task’s minutes (§4.4) and blocks a second timer until the learner resolves it. Resolution
+it reserves the task's minutes (Section 4.4) and blocks a second timer until the learner resolves it. Resolution
 is a learner action in the app: finish with confirmed actual minutes, adjust them, or discard the session
 (which marks it cancelled with no time credited). A stale timer is never auto-completed or auto-marked
 missed.
@@ -172,11 +172,11 @@ day has no further planning capacity. Negative remaining capacity is clamped to 
 
 ### 4.4 Reserved task minutes
 
-In-progress and active-scheduled sessions are commitments toward the task’s remaining work, even though
+In-progress and active-scheduled sessions are commitments toward the task's remaining work, even though
 remaining minutes are only reduced when time is actually logged. For allocation and feasibility:
 
 ```
-reservedMinutes(task) = Σ plannedMinutes of locked sessions for task
+reservedMinutes(task) = sum plannedMinutes of locked sessions for task
                         with status inProgress or activeScheduledToday
 schedulableRemaining(task) = max(0, task.remainingMinutes - reservedMinutes(task))
 ```
@@ -194,9 +194,9 @@ participate. The service filters ineligible tasks before building the engine sna
 ### 5.1 Effective deadline
 
 ```
-if deadline == null            → null
-if deadline < today            → today        // overdue work is treated as due today
-otherwise                      → deadline
+if deadline == null            -> null
+if deadline < today            -> today        // overdue work is treated as due today
+otherwise                      -> deadline
 ```
 
 An overdue task is still flagged separately, but for ordering it competes with work due today rather than
@@ -238,19 +238,19 @@ with a far deadline still yields to a lower-priority task with a nearer deadline
 
 For each date from `today` through `today + horizonDays - 1`:
 
-1. Collect that weekday’s availability windows. Overlapping input is rejected upstream at validation;
+1. Collect that weekday's availability windows. Overlapping input is rejected upstream at validation;
    adjacent windows are merged so break rules apply across the continuous block.
 2. For today, clip the available time to start at `ceilTo5(nowMinute)`; discard portions before that.
-3. Remove locked occupied intervals and the required breaks (§4).
+3. Remove locked occupied intervals and the required breaks (Section 4).
 4. Remaining free intervals are ordered by start minute.
-5. `day.remainingCapacity = max(0, dailyLimit − consumedMinutes)`.
+5. `day.remainingCapacity = max(0, dailyLimit - consumedMinutes)`.
 
 Windows separated by a gap are independent availability periods; the configured break applies between
 sessions within the same merged window. The gap between windows is whatever the learner defined.
 
 ### 6.2 Task loop
 
-`horizonEnd = today + horizonDays − 1` is the last planned date. For each task in the order from §5:
+`horizonEnd = today + horizonDays - 1` is the last planned date. For each task in the order from Section 5:
 
 ```
 searchStartDay = max(today, task.notBefore ?? today)
@@ -318,7 +318,7 @@ Notes:
 
 | Mode | Condition | Placement behavior | Reporting |
 |---|---|---|---|
-| **Hard deadline** | `deadline ≥ today` and `deadline ≤ horizonEnd` | Only days up to the deadline. Never schedules after it. | If leftover: impossible-deadline issue with numbers. |
+| **Hard deadline** | `deadline >= today` and `deadline <= horizonEnd` | Only days up to the deadline. Never schedules after it. | If leftover: impossible-deadline issue with numbers. |
 | **Far deadline** | `deadline > horizonEnd` | Only days within the horizon. | Leftover is `BeyondHorizon` information; not called impossible. |
 | **Overdue** | `deadline < today` | Earliest available days through the horizon, deadline ignored for placement. | Overdue issue; work scheduled best-effort ASAP. |
 | **No deadline** | `deadline == null` (includes revisions) | Through the horizon, starting no earlier than `notBefore`. | `HorizonBacklog` if work remains at horizon end. |
@@ -338,15 +338,15 @@ throw an internal error rather than loop forever if invariants are violated.
 
 ## 7. Feasibility warnings
 
-Warnings are structured data; the UI owns the wording. The engine must not emit “impossible” for a task
+Warnings are structured data; the UI owns the wording. The engine must not emit "impossible" for a task
 whose deadline lies beyond the planning horizon or for a revision with no deadline.
 
 ### 7.1 Issue types
 
-**`NoAvailability`** — no usable study windows exist across the horizon (or daily limit is zero/too small
+**`NoAvailability`** - no usable study windows exist across the horizon (or daily limit is zero/too small
 for any session). Global; usually prompts availability setup.
 
-**`ImpossibleDeadline`** — a task with a hard deadline inside the horizon still has unscheduled work
+**`ImpossibleDeadline`** - a task with a hard deadline inside the horizon still has unscheduled work
 after allocation. Fields:
 
 ```
@@ -355,31 +355,31 @@ deadline
 remainingMinutes                    // total remaining before planning
 reservedActiveMinutes               // active/in-progress commitments counted toward remaining
 scheduledBeforeDeadlineMinutes      // newly planned + reserved active sessions on/before deadline
-deficitMinutes                      // remaining − scheduled (bounded below by 0)
+deficitMinutes                      // remaining - scheduled (bounded below by 0)
 availableCapacityBeforeDeadline     // capacity from now to deadline after locking, before new allocation
 otherMinutesBeforeDeadline          // newly planned sessions for other tasks in that range
 daysAvailableBeforeDeadline         // days from max(today, notBefore)..deadline with any capacity
 suggestedExtraMinutesPerDay         // ceilTo5(ceil(deficit / daysAvailable)), or null if no days
 ```
 
-**`OverdueTask`** — deadline < today and work remains (whether or not it could now be scheduled). Fields:
+**`OverdueTask`** - deadline < today and work remains (whether or not it could now be scheduled). Fields:
 `taskId`, `deadline`, `remainingMinutes`, `scheduledMinutes` (new + reserved), `unscheduledMinutes`,
 `daysOverdue`.
 
-**`HorizonBacklog`** — a no-deadline task (including a revision) still has unscheduled work when the
+**`HorizonBacklog`** - a no-deadline task (including a revision) still has unscheduled work when the
 horizon ends. Fields: `taskId`, `remainingMinutes`, `scheduledMinutes`, `unscheduledMinutes`.
 
-**`BeyondHorizon`** — informational variant for a far deadline beyond the horizon with leftover work; it
+**`BeyondHorizon`** - informational variant for a far deadline beyond the horizon with leftover work; it
 must not be presented as an impossible deadline. Fields mirror backlog plus the deadline.
 
-**`DeferredBeyondHorizon`** — the task is not eligible within the horizon because `notBefore` is after
+**`DeferredBeyondHorizon`** - the task is not eligible within the horizon because `notBefore` is after
 `horizonEnd`. Informational only; it is neither backlog nor an impossible deadline. Fields: `taskId`,
 `notBefore`, `remainingMinutes`.
 
 ### 7.2 Ordering and labels
 
 1. Global issues (no availability) first.
-2. Task issues in the task order from §5.
+2. Task issues in the task order from Section 5.
 3. Issues of the same task ordered by severity: impossible deadline, overdue, backlog, deferred or other
    informational issues.
 
@@ -402,7 +402,7 @@ limit or available window capacity, the UI must also suggest extending availabil
 
 Example copy:
 
-> **This deadline doesn’t fit.** “Async patterns” needs **3h 10m** before Fri, Oct 31. This plan fits
+> **This deadline doesn't fit.** "Async patterns" needs **3h 10m** before Fri, Oct 31. This plan fits
 > **1h 30m**; you are **1h 40m** short. There are **4h** of capacity left before the deadline, and
 > **2h 30m** of it goes to other tasks. Add **35 min/day**, extend the deadline, or reduce the estimate by
 > **1h 40m**.
@@ -418,8 +418,8 @@ Tone: factual and supportive, never blaming the learner.
 A session is **missed** when all of the following hold:
 
 - status is `scheduled`;
-- its occupied interval has ended: for today, `startMinute + max(plannedMinutes, 0) ≤ nowMinute` with end
-  ≤ 1440, or its date is before today;
+- its occupied interval has ended: for today, `startMinute + max(plannedMinutes, 0) <= nowMinute` with end
+  <= 1440, or its date is before today;
 - it is not in progress (no timer running).
 
 A session whose start has passed but whose end has not is **active** on today and is retained and locked.
@@ -428,7 +428,7 @@ It becomes missed on a later run if still not completed.
 When marked missed:
 
 - The row is kept with status `missed`; `planned_minutes` remains for history; no actual time is credited.
-- The task’s `remaining_minutes` is unchanged (future plan time was never deducted).
+- The task's `remaining_minutes` is unchanged (future plan time was never deducted).
 - The task stays open.
 - The session is excluded from future plan views.
 
@@ -442,11 +442,11 @@ When marked missed:
    are not removed); insert the new sessions; update `last_plan_at`; clear `plan_stale`.
 6. Present a change summary (sessions moved, warnings).
 
-Lifecycle removals for completed, cancelled, or archived entities (§9) happen before the task snapshot
+Lifecycle removals for completed, cancelled, or archived entities (Section 9) happen before the task snapshot
 is loaded and are independent of the auto-replan setting.
 
-Steps 2–6 constitute a plan run and execute automatically only when auto-replan is enabled, or when the
-learner taps “Rebuild plan”. Step 1 (missed detection) runs on every reconcile regardless. When
+Steps 2-6 constitute a plan run and execute automatically only when auto-replan is enabled, or when the
+learner taps "Rebuild plan". Step 1 (missed detection) runs on every reconcile regardless. When
 auto-replan is off, a reconcile also applies lifecycle removals for completed/cancelled/archived entities
 and marks the plan stale, but leaves all other future `scheduled` rows untouched.
 
@@ -457,11 +457,11 @@ are retained for audit, excluded from capacity and future views, and never delet
 
 - **Automatic plan runs (only when auto-replan is enabled):** app start after first frame; app resume;
   midnight rollover while open; task, topic, availability, or planning-setting changes; partial session
-  completion; task completion, cancellation, or archiving after that task’s future rows are removed.
+  completion; task completion, cancellation, or archiving after that task's future rows are removed.
 - **Always on reconcile, independent of the setting:** missed detection; lifecycle removal of future
   `scheduled` rows for completed/cancelled/archived tasks and topics; stale-plan marking; stale-timer
   prompt.
-- **Always available:** “Rebuild plan”, which runs the full sequence on demand.
+- **Always available:** "Rebuild plan", which runs the full sequence on demand.
 
 If auto-replan is disabled, the UI shows that the plan is stale and offers a rebuild. No sessions are
 moved or newly planned automatically; only rows belonging to completed, cancelled, or archived work are
@@ -483,7 +483,7 @@ cancellation paths above and then the usual auto/manual replan policy.
 
 Plans are snapshots. If the device clock jumps forward, past-due sessions become missed on the next
 reconcile. If it jumps backward, already missed/completed records are **not** unmarked; future planning
-uses the new “now”. History is not rewritten. Timer elapsed values that become implausible (e.g.,
+uses the new "now". History is not rewritten. Timer elapsed values that become implausible (e.g.,
 negative) are clamped and logged in debug builds.
 
 ---
@@ -508,7 +508,7 @@ negative) are clamped and logged in debug builds.
 - **Archive/complete goal or archive subject:** dependent tasks, including revisions, become ineligible;
   future scheduled sessions are removed; past history remains. Replan when auto-replan is enabled.
 - **Edit estimate:** for an open task, recompute
-  `remaining = max(0, newEstimate − totalLoggedActualMinutes)`. If the result is 0, complete the task and
+  `remaining = max(0, newEstimate - totalLoggedActualMinutes)`. If the result is 0, complete the task and
   cancel future sessions (notify the learner). If > 0, replan when auto-replan is enabled; otherwise mark
   the plan stale.
 - **Edit deadline/priority:** replan when auto-replan is enabled; otherwise mark the plan stale. Moving a
@@ -518,14 +518,14 @@ negative) are clamped and logged in debug builds.
   and future views. The task keeps its remaining work and may be rescheduled by the next replan unless the
   task itself is cancelled/completed. Cancelling a revision session does not regenerate it.
 - **One active timer:** at most one session may be `in_progress` globally. Starting a second is rejected.
-  A stale in-progress session from an earlier date blocks a new timer and reserves its task’s minutes
+  A stale in-progress session from an earlier date blocks a new timer and reserves its task's minutes
   until the learner finishes, adjusts, or discards it.
-- **While a timer runs:** completing, cancelling, or archiving its task — or editing its estimate in a way
-  that would complete the task — is blocked until the in-progress session is finished or discarded, so
+- **While a timer runs:** completing, cancelling, or archiving its task - or editing its estimate in a way
+  that would complete the task - is blocked until the in-progress session is finished or discarded, so
   actual time cannot be double-counted or orphaned.
 
 When auto-replan is off, any lifecycle event that would have triggered a plan run sets the persisted
-stale flag instead; the UI offers “Rebuild plan”.
+stale flag instead; the UI offers "Rebuild plan".
 
 ---
 
@@ -535,13 +535,13 @@ stale flag instead; the UI offers “Rebuild plan”.
 
 | Preset | Review dates after the learned date | Sessions per review |
 |---|---|---|
-| Off | None | — |
+| Off | None | - |
 | Light | +1, +3, +7 days | 25 min each |
 | Standard (default) | +1, +3, +7, +14 days | 25 min each |
 
 The learned date is the local date on which the topic is marked learned. Review dates are calendar-day
 offsets; they do not skip weekends. Each revision uses `revisionLengthMinutes` (25 minutes by default,
-configurable 10–60).
+configurable 10-60).
 
 ### 10.2 Generated tasks
 
@@ -558,7 +558,7 @@ For each review date, create one task:
 
 Revision tasks are normal scheduled work: they respect availability, breaks, daily limits, and ordering.
 Because they have no deadline, they sort in the undated group with revisions ahead of study tasks. The
-review date is shown in the UI as “Review from <date>”; because the task has no deadline, it may be
+review date is shown in the UI as "Review from <date>"; because the task has no deadline, it may be
 scheduled on the first available slot on or after that date. This avoids false deadline failures when a
 review date falls on a weekend or a full day.
 
@@ -583,7 +583,7 @@ review date falls on a weekend or a full day.
   their estimate and may be edited individually.
 - Completing or cancelling a revision does not spawn a replacement; revisions are generated only when a
   topic is marked learned.
-- Editing a revision’s estimate, deadline, or priority is allowed like any task; the engine treats it
+- Editing a revision's estimate, deadline, or priority is allowed like any task; the engine treats it
   accordingly. Changing the estimate does not create a new stage.
 
 ---
@@ -595,7 +595,7 @@ Guaranteed by:
 - No randomness, `DateTime.now()`, locale-dependent comparisons, or unordered iteration. All collections
   are explicitly sorted before allocation.
 - Integer minute arithmetic only.
-- Task ordering is total (§5); availability windows are sorted by `(weekday, startMinute)`.
+- Task ordering is total (Section 5); availability windows are sorted by `(weekday, startMinute)`.
 - Engine output excludes generated IDs; session UUIDs are assigned in the service layer and never feed
   back into layout.
 - The engine accepts the clock snapshot explicitly.
@@ -617,38 +617,38 @@ Inputs that violate these are rejected before the engine (UI + repository); the 
 
 | Setting | Range / rule |
 |---|---|
-| `dailyLimitMinutes` | 15–720 |
-| `blockLengthMinutes` | 15–120 |
-| `minSessionMinutes` | 5 … `floor(blockLengthMinutes / 2)` |
-| `breakMinutes` | 0–30 |
-| `horizonDays` | 7–30 |
-| `revisionLengthMinutes` | 10–60 |
+| `dailyLimitMinutes` | 15-720 |
+| `blockLengthMinutes` | 15-120 |
+| `minSessionMinutes` | 5 ... `floor(blockLengthMinutes / 2)` |
+| `breakMinutes` | 0-30 |
+| `horizonDays` | 7-30 |
+| `revisionLengthMinutes` | 10-60 |
 
-The `minSession ≤ block / 2` rule guarantees that splitting a task into block-sized pieces cannot force
+The `minSession <= block / 2` rule guarantees that splitting a task into block-sized pieces cannot force
 non-final fragments below the minimum.
 
 ### Availability
 
-- `weekday` 1–7.
-- `0 ≤ startMinute < endMinute ≤ 1440`.
+- `weekday` 1-7.
+- `0 <= startMinute < endMinute <= 1440`.
 - Windows on the same weekday must not overlap; overlapping input is rejected (adjacent windows are
   merged by the engine).
 - At least one window is required to generate useful sessions; otherwise `NoAvailability` is returned.
 
 ### Tasks
 
-- `estimateMinutes` 5–2400 (in 5-minute steps at the UI level).
+- `estimateMinutes` 5-2400 (in 5-minute steps at the UI level).
 - `remainingMinutes` 0..estimate (0 means no scheduling; service normally completes such tasks).
-- `priority` ∈ {0, 1, 2}.
-- `notBefore ≤ deadline` when both are present.
-- Revision stage ≥ 0; unique per topic.
-- A task’s `notBefore` beyond the horizon is allowed; it receives no sessions this run and is reported as
+- `priority` in {0, 1, 2}.
+- `notBefore <= deadline` when both are present.
+- Revision stage >= 0; unique per topic.
+- A task's `notBefore` beyond the horizon is allowed; it receives no sessions this run and is reported as
   deferred, not as backlog.
 
 ### Sessions / locks
 
-- `startMinute + plannedMinutes ≤ 1440`.
-- `actualMinutes` ≥ 1 when status is completed and ≤ 1440.
+- `startMinute + plannedMinutes <= 1440`.
+- `actualMinutes` >= 1 when status is completed and <= 1440.
 - At most one `in_progress` session globally.
 - Locked data must belong to open tasks except for historical completed/missed records.
 
@@ -658,26 +658,26 @@ non-final fragments below the minimum.
 
 Assumptions for all examples: weekend has no windows; block 50, minimum 15, break 10, daily limit 120.
 
-### Example A — feasible plan with gap filling
+### Example A - feasible plan with gap filling
 
-**Now:** Thursday 2026-10-29, 17:00. **Windows:** Thursday and Friday 18:00–21:00.
+**Now:** Thursday 2026-10-29, 17:00. **Windows:** Thursday and Friday 18:00-21:00.
 
 **Tasks**
 
 | Task | Due | Priority | Remaining |
 |---|---|---|---|
 | A | Fri 2026-10-30 | High | 120 |
-| B | — | Normal | 60 |
+| B | - | Normal | 60 |
 
 **Sorting:** A (hard deadline) before B (no deadline).
 
-**A allocation (Thursday):** 18:00–18:50, 19:00–19:50, 20:00–20:20 (total 120; daily limit reached).
-**B allocation (Friday):** 18:00–18:50, 19:00–19:10 (final 10-minute remainder is allowed to be short;
+**A allocation (Thursday):** 18:00-18:50, 19:00-19:50, 20:00-20:20 (total 120; daily limit reached).
+**B allocation (Friday):** 18:00-18:50, 19:00-19:10 (final 10-minute remainder is allowed to be short;
 total 60).
 
 No overlaps; breaks respected; neither day exceeds 120 minutes.
 
-### Example B — impossible deadline
+### Example B - impossible deadline
 
 Same windows. **Task A:** due Friday, remaining 300. Thursday capacity 120, Friday capacity 120.
 
@@ -688,22 +688,22 @@ Same windows. **Task A:** due Friday, remaining 300. Thursday capacity 120, Frid
   learner extends the deadline (then it becomes overdue and is scheduled best-effort) or reduces the
   estimate.
 - If another task C existed after A in the sort order, A would consume the available capacity first and C
-  could also become infeasible. This is visible in C’s own warning.
+  could also become infeasible. This is visible in C's own warning.
 
-### Example C — missed sessions
+### Example C - missed sessions
 
 Same as Example A on Thursday. The learner completes only the 18:00 session (actual 50) and misses the
 other two. On Friday at 10:00, before any replan, only 70 minutes remain.
 
 1. Thursday 19:00 and 20:00 sessions are marked missed and retained.
 2. The completed 18:00 session keeps actual 50 and its history.
-3. Replan: A (70 minutes left) gets Friday 18:00–18:50 and 19:00–19:20, using 70 of Friday’s 120
+3. Replan: A (70 minutes left) gets Friday 18:00-18:50 and 19:00-19:20, using 70 of Friday's 120
    available minutes.
-4. B can then receive 50 of its 60 minutes (Friday 19:30–20:20), bringing the day to the 120-minute
+4. B can then receive 50 of its 60 minutes (Friday 19:30-20:20), bringing the day to the 120-minute
    limit; its final 10 minutes are a horizon backlog.
 5. No missed or completed row is altered.
 
-### Example D — revision generation and placement
+### Example D - revision generation and placement
 
 Topic learned Thursday 2026-10-29 with the Standard preset (+1, +3, +7, +14 days):
 
@@ -736,7 +736,7 @@ reported as deferred rather than backlog.
 | Overdue task with huge remaining | Consumes capacity first by effective-today ordering; warning remains until complete. |
 | Deadline beyond horizon | Sessions within horizon; leftover is informational, not impossible. |
 | Auto-replan disabled | Missed sessions are still marked on resume; lifecycle removals still apply; plan marked stale; manual rebuild available. |
-| Timer running while replanning | In-progress session stays locked; its task’s remaining is reserved; other work is planned around it. |
+| Timer running while replanning | In-progress session stays locked; its task's remaining is reserved; other work is planned around it. |
 | Stale in-progress timer (earlier date) | Remains locked and reserves task minutes; consumes no future capacity; blocks a new timer until the learner finishes, adjusts, or discards it; never auto-completed or auto-missed. |
 | Completed session ran past plan | Occupied interval uses max(planned, actual) to avoid overlap; cap counts actual. |
 | Clock moved backward | No history is un-marked; future sessions regenerate from the new now. |
@@ -766,7 +766,7 @@ The engine test suite must cover at least:
 3. Session split by block length and gap filling.
 4. Minimum-session guard and final short remainder.
 5. Daily limit reached mid-task; continuation on the next day.
-6. Completed minutes already consume part of today’s limit.
+6. Completed minutes already consume part of today's limit.
 7. In-progress session locks a slot and reserves task minutes.
 8. Active-today session is retained and not double-planned.
 9. Break enforcement within a window.
@@ -783,7 +783,7 @@ The engine test suite must cover at least:
 20. Adjacent availability windows merge; overlapping input is rejected upstream.
 21. Windows on different weekdays only place sessions on those weekdays.
 22. Horizon boundaries: today included, last day included, day after excluded.
-23. Rounding of “now” to the next 5-minute boundary, including near midnight.
+23. Rounding of "now" to the next 5-minute boundary, including near midnight.
 24. Deadline today with remaining capacity and an active session.
 25. In-progress session with elapsed > planned.
 26. Task with `notBefore` after the horizon: no sessions, `DeferredBeyondHorizon`, no backlog.
@@ -800,17 +800,17 @@ For generated valid snapshots, assert:
 - no overlaps, including against completed occupied intervals;
 - every session inside a window and within the day;
 - daily limit respected;
-- per-task allocation (new + reserved) ≤ remaining;
+- per-task allocation (new + reserved) <= remaining;
 - no hard-deadline violations;
 - no session before `notBefore` or before the rounded now;
-- sessions ≥ min unless they are the final task remainder;
+- sessions >= min unless they are the final task remainder;
 - identical replay produces identical session slots;
 - warning coverage: for every task, scheduled + unscheduled = schedulable remaining (within rounding
   rules), and every unscheduled portion has an issue.
 
 ### Idempotence and persistence tests (service/repository level)
 
-- Replan twice → same slot layout; completed/missed/in-progress rows unchanged.
+- Replan twice -> same slot layout; completed/missed/in-progress rows unchanged.
 - Missed marking is idempotent.
 - Completed actual updates remaining exactly once.
 - Revision generation is idempotent and unique.
@@ -831,7 +831,7 @@ For generated valid snapshots, assert:
 ## 16. Open decisions specific to scheduling
 
 1. Revision tasks have no hard deadline in v1 (recommended to avoid false warnings). Confirm.
-2. Overdue work competes as “due today” rather than always first. Confirm.
+2. Overdue work competes as "due today" rather than always first. Confirm.
 3. Sequential priority allocation (no fairness rotation) is accepted; warnings expose starvation.
 4. Breaks apply within a merged availability window; separate windows are treated as independent
    availability periods. Confirm.

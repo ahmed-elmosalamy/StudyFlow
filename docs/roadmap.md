@@ -1,8 +1,8 @@
-# StudyFlow — Implementation Roadmap
+# StudyFlow - Implementation Roadmap
 
-- **Status:** Draft v0.1 — awaiting approval
+- **Status:** Draft v0.1 - awaiting approval
 - **Date:** 2026-10-29
-- **Related:** [Product requirements](product-requirements.md) · [Architecture](architecture.md) · [Scheduling rules](scheduling-rules.md)
+- **Related:** [Product requirements](product-requirements.md) - [Architecture](architecture.md) - [Scheduling rules](scheduling-rules.md)
 
 No application features will be implemented until the documentation is approved. The phases below are
 sequenced for early risk reduction and usable checkpoints, not calendar estimates.
@@ -13,7 +13,7 @@ sequenced for early risk reduction and usable checkpoints, not calendar estimate
 
 ### Decisions to confirm
 
-1. **Application ID:** proposed `com.studyflow.app`.
+1. **Application ID:** `com.studyflow.studyflow` (approved and applied).
 2. **Initialize git** in `C:\ai programs\StudyFlow` and commit the docs before code (recommended).
 3. **Defaults:** 120 min/day; 50-min block; 15-min minimum; 10-min break; 14-day horizon; Standard
    revision preset (1/3/7/14 days, 25 min); automatic replanning on.
@@ -35,7 +35,7 @@ sequenced for early risk reduction and usable checkpoints, not calendar estimate
 | Dependency set and Drift codegen | Resolved and validated in a disposable project; removed afterward |
 | Chrome / Visual Studio | Missing, but not needed for the Android target |
 
-### Phase 0 — Foundation (small)
+### Phase 0 - Foundation (small)
 
 **Goal:** a running, styled Android shell with the planned dependency and folder structure.
 
@@ -43,7 +43,7 @@ sequenced for early risk reduction and usable checkpoints, not calendar estimate
   application ID to the approved value), then `git init` if approved.
 - Add the runtime and dev dependencies from the architecture document; set up `analysis_options.yaml`.
 - Create the folder skeleton, Material 3 theme, app shell, and go_router routes with placeholder screens.
-- Set the Android app name to “StudyFlow”, adaptive launcher icon placeholder, edge-to-edge, and
+- Set the Android app name to "StudyFlow", adaptive launcher icon placeholder, edge-to-edge, and
   `allowBackup=false`; verify the release manifest does not request network access.
 - Add the app database skeleton (`app_settings` singleton only) and a `ProviderScope` bootstrap.
 - Smoke test on the Pixel 7 emulator.
@@ -101,7 +101,7 @@ overflow at 200% text on key screens; screenshots reviewed on the emulator.
 
 **Goal:** prove the scheduling contract before depending on it in the UI.
 
-### 3a — Pure engine first
+### 3a - Pure engine first
 
 - Implement `LocalDate`, clock abstraction, settings validation, task ordering, day construction, locked
   intervals, allocation, and feasibility warnings exactly as specified in `docs/scheduling-rules.md`.
@@ -111,7 +111,7 @@ overflow at 200% text on key screens; screenshots reviewed on the emulator.
 - **Checkpoint:** review engine rules and failed/passing scenarios before UI integration. Any change to the
   spec is agreed here.
 
-### 3b — Availability settings and plan UI
+### 3b - Availability settings and plan UI
 
 - Availability settings: weekly windows per day, daily limit, block length, minimum, break, horizon.
 - Rebuild-plan action, Schedule screen (next 7 days + full horizon), per-day planned/capacity summary.
@@ -132,7 +132,7 @@ completed, missed, or learner-cancelled rows are changed by a plan run.
 
 ---
 
-## 4. Daily use and missed-session recovery (medium–large)
+## 4. Daily use and missed-session recovery (medium-large)
 
 **Goal:** the app handles real life.
 
@@ -150,7 +150,7 @@ completed, missed, or learner-cancelled rows are changed by a plan run.
 - Tests: reconciliation idempotence, partial completion math, missed history immutability, auto/manual
   replan behavior, auto-replan-off cleanup and stale-flag set/clear, lifecycle triggers.
 
-**Verification:** scenario test/emulator demo: miss a day → completed history intact → remaining work
+**Verification:** scenario test/emulator demo: miss a day -> completed history intact -> remaining work
 moves to valid slots; changing availability/deadline updates the plan; no overlaps or limit violations.
 
 **Exit:** a learner can run a full day from the Today screen and recover from missed sessions without
@@ -158,7 +158,7 @@ manual arithmetic.
 
 ---
 
-## 5. Focus timer and progress (medium–large)
+## 5. Focus timer and progress (medium-large)
 
 **Goal:** measure real study time and report it clearly.
 
@@ -174,7 +174,7 @@ manual arithmetic.
 - Tests: fake-clock timer math, restart restoration, stale-timer finish/discard paths, completion updates
   task and future plan, progress aggregation reconciles with sessions, widget accessibility at 200% text.
 
-**Verification:** force-stop and relaunch while a timer is running → elapsed is correct; finishing early
+**Verification:** force-stop and relaunch while a timer is running -> elapsed is correct; finishing early
 reschedules remainder; progress totals match session logs.
 
 **Exit:** focus timer and progress are reliable on the emulator with a fake clock test suite.
@@ -185,7 +185,7 @@ reschedules remainder; progress totals match session logs.
 
 **Goal:** spaced revision and a shippable-feeling v1.
 
-- Revision service: set the per-topic cycle marker on first “learned”, generate stages idempotently,
+- Revision service: set the per-topic cycle marker on first "learned", generate stages idempotently,
   cancel on unlearn/archive, no hard deadlines, earliest review date. Preset changes
   (Off/Light/Standard) apply only to newly learned topics; existing revision tasks and cycles are left
   untouched.
@@ -193,7 +193,7 @@ reschedules remainder; progress totals match session logs.
 - Revision stats in Progress.
 - Accessibility audit: TalkBack pass, 48dp targets, contrast check light/dark, reduce motion, large text.
 - Performance check: cold start, scrolling, plan rebuild benchmark on emulator.
-- End-to-end integration test: fresh install → setup → hierarchy → plan → complete/miss → revisions →
+- End-to-end integration test: fresh install -> setup -> hierarchy -> plan -> complete/miss -> revisions ->
   progress.
 - Release candidate: `flutter build apk --release`, verify release manifest has no INTERNET permission,
   no debug logs, launcher icon, app label, edge-to-edge.
@@ -223,14 +223,14 @@ offline in airplane mode; impossible deadlines and missed-session recovery demoe
 | 0 | Foundation, shell, theme, Android config | S | Approval |
 | 1 | Database, repositories, tests | M | 0 |
 | 2 | Goals/subjects/topics/tasks UI | L | 1 |
-| 3a | Pure scheduling engine, golden/property tests | L–XL | 1 |
+| 3a | Pure scheduling engine, golden/property tests | L-XL | 1 |
 | 3b | Availability settings, plan UI, warnings | L | 2, 3a |
-| 4 | Today, missed sessions, replan triggers | M–L | 2, 3b |
-| 5 | Focus timer, progress | M–L | 4 |
+| 4 | Today, missed sessions, replan triggers | M-L | 2, 3b |
+| 5 | Focus timer, progress | M-L | 4 |
 | 6 | Revisions, accessibility, release polish | M | 4, 5 |
 | 7 | Hardening | S | 6 |
 
-Relative effort is for planning order only — no delivery dates are promised here.
+Relative effort is for planning order only - no delivery dates are promised here.
 
 ---
 
@@ -262,7 +262,7 @@ flutter build apk --debug       # at least at phase ends
 4. **Before release candidate:** accessibility/performance pass and full regression suite.
 
 Each phase ends with a concise summary of what changed, test evidence, and known limitations. No phase
-starts until the previous phase’s exit criteria are met (or a scope adjustment is explicitly agreed).
+starts until the previous phase's exit criteria are met (or a scope adjustment is explicitly agreed).
 
 ---
 
@@ -297,7 +297,7 @@ starts until the previous phase’s exit criteria are met (or a scope adjustment
 
 ## Immediate next steps after approval
 
-1. Confirm the seven decisions in §0.
+1. Confirm the seven decisions in Section 0.
 2. Accept Android licenses (`flutter doctor --android-licenses`).
 3. Initialize git and commit the docs.
 4. Scaffold the app in Phase 0 with the approved application ID.

@@ -1,10 +1,10 @@
-# StudyFlow — Product Requirements Document
+# StudyFlow - Product Requirements Document
 
-- **Status:** Draft v0.1 — awaiting approval
+- **Status:** Draft v0.1 - awaiting approval
 - **Date:** 2026-10-29
 - **Platform:** Android (Flutter), offline-only
 - **Product type:** Local-first study planner for independent learners
-- **Related:** [Architecture](architecture.md) · [Scheduling rules](scheduling-rules.md) · [Roadmap](roadmap.md)
+- **Related:** [Architecture](architecture.md) - [Scheduling rules](scheduling-rules.md) - [Roadmap](roadmap.md)
 
 ---
 
@@ -24,7 +24,7 @@ cloud, no AI API, no advertising, and no subscription.
 
 ## 2. Problem
 
-Independent learners — self-taught developers, language learners, exam candidates, career switchers —
+Independent learners - self-taught developers, language learners, exam candidates, career switchers -
 study from online courses, books, and tutorials without an imposed timetable. Their common failure
 modes:
 
@@ -62,7 +62,7 @@ boxes.
 - AI-generated plans or natural-language assistants. Scheduling must remain deterministic.
 - Social features, leaderboards, sharing, or third-party calendar integration.
 - Importing course content, PDFs, videos, or notes from external services.
-- Background reminders/notifications and home-screen widgets. Deferred until after v1 (see §13).
+- Background reminders/notifications and home-screen widgets. Deferred until after v1 (see Section 13).
 - iOS release, web release, or tablet-specific layouts beyond a responsive phone UI.
 - Data export/backup and encrypted storage. The database is local and unencrypted in v1.
 
@@ -70,7 +70,7 @@ boxes.
 
 ## 4. Target users and representative journeys
 
-**Primary persona — the self-directed learner.** Studies 30–90 minutes on weekdays and more on
+**Primary persona - the self-directed learner.** Studies 30-90 minutes on weekdays and more on
 weekends, uses one or two courses/books at a time, wants a clear answer to "what should I study
 tonight?". Values privacy and offline use.
 
@@ -109,7 +109,7 @@ tonight?". Values privacy and offline use.
 
 ## 6. Domain model and terminology
 
-The hierarchy is strict in v1: **Goal → Subject → Topic → Task**. Each child has exactly one parent.
+The hierarchy is strict in v1: **Goal -> Subject -> Topic -> Task**. Each child has exactly one parent.
 
 | Concept | Definition | Key fields |
 |---|---|---|
@@ -121,8 +121,8 @@ The hierarchy is strict in v1: **Goal → Subject → Topic → Task**. Each chi
 | **Availability** | When the learner is able to study. | Weekly windows per weekday, daily study limit, break length |
 | **Plan** | The generated set of future sessions plus feasibility warnings. | Sessions, per-task allocation, warnings |
 
-**Example:** Goal *"Become job-ready in Flutter"* → Subject *"Riverpod & state management"* → Topic
-*"AsyncNotifier patterns"* → Task *"Work through the async examples"*, estimate 90 minutes, deadline
+**Example:** Goal *"Become job-ready in Flutter"* -> Subject *"Riverpod & state management"* -> Topic
+*"AsyncNotifier patterns"* -> Task *"Work through the async examples"*, estimate 90 minutes, deadline
 2026-11-08, priority High.
 
 ### Key task semantics
@@ -145,35 +145,35 @@ The hierarchy is strict in v1: **Goal → Subject → Topic → Task**. Each chi
 Each requirement includes acceptance criteria that will be verified by automated tests, manual
 checks on an Android emulator, or both.
 
-### FR-1 — First-run setup without an account
+### FR-1 - First-run setup without an account
 
 On first launch, the app explains its local-only nature and asks for study availability (weekdays and
-weekends) with editable suggested defaults: Mon–Fri 18:00–21:00, Sat–Sun 10:00–12:00, with a
+weekends) with editable suggested defaults: Mon-Fri 18:00-21:00, Sat-Sun 10:00-12:00, with a
 120-minute daily limit. Setup can be skipped, but scheduling is unavailable until at least one study
 window exists. No sign-up, email, profile, or network call is required.
 
 **Acceptance:** Fresh install works in airplane mode; closing setup and returning resumes the app in a
 usable state; attempting to generate a plan with no availability shows a setup prompt, not a crash.
 
-### FR-2 — Goals
+### FR-2 - Goals
 
 Learners can create, edit, archive, restore, and complete goals. A completed goal is read-only for
 planning. Goals may have an optional target date (informational only in v1; scheduling is driven by
 task deadlines). Goal colors are chosen from a fixed accessible palette.
 
-**Acceptance:** Goal CRUD persists across restarts; archiving removes the goal’s tasks and revisions
+**Acceptance:** Goal CRUD persists across restarts; archiving removes the goal's tasks and revisions
 from future plans, hides it from active lists, and keeps its history; a goal with dependent data cannot
 be hard-deleted.
 
-### FR-3 — Subjects
+### FR-3 - Subjects
 
 Learners can add subjects under a goal, edit titles/notes, reorder them, and archive them.
 
 **Acceptance:** Subjects appear under the correct goal; deleting a subject with topics is blocked in
-favor of archiving; archiving removes its tasks’ future sessions while retaining history; ordering
+favor of archiving; archiving removes its tasks' future sessions while retaining history; ordering
 persists.
 
-### FR-4 — Topics and learning status
+### FR-4 - Topics and learning status
 
 Learners can add topics under a subject, edit notes, and set status: not started, learning, learned,
 archived. Marking a topic learned records the learned date and triggers revision planning (FR-12).
@@ -185,7 +185,7 @@ supports one revision cycle per topic: re-learning does not generate a second se
 revision tasks are generated for the same topic and interval; archiving a topic removes its open tasks
 and revisions from future plans without deleting history.
 
-### FR-5 — Study tasks
+### FR-5 - Study tasks
 
 Learners can create tasks under a topic with:
 
@@ -199,7 +199,7 @@ Learners can create tasks under a topic with:
 Tasks can be edited, completed manually, cancelled, or archived. Completed and cancelled tasks remain
 in history. Archiving a task removes it from future plans while retaining its history. A task's
 remaining time is visible; editing its estimate recomputes remaining time as
-`max(0, newEstimate − loggedActualMinutes)` for open tasks. Deadline and priority changes trigger plan
+`max(0, newEstimate - loggedActualMinutes)` for open tasks. Deadline and priority changes trigger plan
 regeneration (if automatic replanning is enabled).
 
 **Acceptance:** Invalid values are rejected with inline guidance; completed tasks are excluded from
@@ -207,7 +207,7 @@ future scheduling; changing a deadline updates the plan when automatic replannin
 the plan is marked stale); manual completion zeroes remaining time and cancels future sessions for that
 task.
 
-### FR-6 — Availability and limits
+### FR-6 - Availability and limits
 
 Learners define, per weekday, one or more study windows (start/end times) and a daily study limit in
 minutes. They also set a preferred session block length, minimum session length, and break length
@@ -221,7 +221,7 @@ continuous availability); the plan never starts a session outside a window; the 
 minutes on a day never exceeds the daily limit; changing availability regenerates the plan when automatic
 replanning is enabled (otherwise it is marked stale until a manual rebuild).
 
-### FR-7 — Automatic daily schedule generation
+### FR-7 - Automatic daily schedule generation
 
 The app generates sessions for all eligible open tasks across a configurable planning horizon
 (default 14 days). It respects deadlines, priorities, task order, availability, breaks, session length,
@@ -232,7 +232,7 @@ grouped by day, and shows planned minutes versus capacity.
 available windows; the same inputs and clock produce the same plan; regeneration does not remove
 completed or in-progress sessions.
 
-### FR-8 — Today and upcoming schedule
+### FR-8 - Today and upcoming schedule
 
 The Today screen shows today's sessions in chronological order, the next actionable session, planned
 versus completed minutes, and quick access to the focus timer or manual completion. The Schedule
@@ -242,7 +242,7 @@ completed states are handled explicitly.
 **Acceptance:** Today reflects database changes immediately; past sessions are not shown as actionable;
 completed sessions display actual minutes; navigation to the focus timer works for today's sessions.
 
-### FR-9 — Missed sessions and automatic recovery
+### FR-9 - Missed sessions and automatic recovery
 
 When a scheduled session ends without completion, it is marked missed. When automatic replanning is
 enabled, the plan is repaired on the next app launch, resume, or explicit refresh. The unfinished work is
@@ -254,7 +254,7 @@ visible "Rebuild plan" action when the plan is stale.
 upcoming; regenerated sessions do not overlap or exceed limits; completed sessions and their actual
 minutes are unchanged; disabling automatic replanning still allows manual recovery.
 
-### FR-10 — Focus timer and session logging
+### FR-10 - Focus timer and session logging
 
 From today's session, learners can start a focus timer. It supports pause/resume, persists across app
 backgrounding and process death using timestamps, and completes early or at the planned duration. On
@@ -269,7 +269,7 @@ app; a stale timer can be finished or discarded without silent time credit; fini
 the remaining work when automatic replanning is on; manually completing a session reduces remaining
 time by the entered amount; a session cannot be completed with 0 or invalid minutes.
 
-### FR-11 — Progress tracking
+### FR-11 - Progress tracking
 
 Progress includes:
 
@@ -284,15 +284,15 @@ Charts and summaries must be readable by screen readers and must not rely on col
 **Acceptance:** Numbers reconcile with session history; data is deterministic from stored records; the
 screen is usable with TalkBack and at 200% text scale.
 
-### FR-12 — Revision sessions
+### FR-12 - Revision sessions
 
 When a topic is marked learned, StudyFlow generates revision tasks according to a preset:
 
-- Off — no revision tasks.
-- Light — 1, 3, and 7 days after learning.
-- Standard (default) — 1, 3, 7, and 14 days after learning.
+- Off - no revision tasks.
+- Light - 1, 3, and 7 days after learning.
+- Standard (default) - 1, 3, 7, and 14 days after learning.
 
-Each revision task uses the revision length setting (25 minutes by default, configurable 10–60). Its
+Each revision task uses the revision length setting (25 minutes by default, configurable 10-60). Its
 target review date is an **earliest start date**: it is scheduled at the first realistic opportunity on
 or after that date and has no hard deadline in v1, so a busy week or a weekend without study windows
 does not produce a false "impossible deadline" warning. Revision tasks participate in normal scheduling
@@ -307,7 +307,7 @@ earliest date; un-learning or archiving a topic stops future revision sessions; 
 history is preserved; changing the preset does not duplicate or silently resurrect tasks for existing
 topics.
 
-### FR-13 — Deadline feasibility explanations
+### FR-13 - Deadline feasibility explanations
 
 For every task with a deadline inside the planning horizon that cannot be fully scheduled before it, the
 app must explain:
@@ -318,7 +318,7 @@ app must explain:
 - Concrete options: add a given number of minutes per day, extend the deadline, or reduce the estimate.
 - When the deadline is already past, that it is overdue and how it is being handled.
 
-Deadlines beyond the horizon produce an informational “beyond current plan” state, never an impossible
+Deadlines beyond the horizon produce an informational "beyond current plan" state, never an impossible
 warning. Tasks whose earliest eligibility date is beyond the horizon show a deferred state.
 
 Explanations appear in task details and as a summary banner on Schedule/Today. The app must not
@@ -329,7 +329,7 @@ feasible deadline produces no warning; a far deadline is informational, not impo
 availability or a deadline clears or updates the warning on the next plan (or marks the plan stale when
 automatic replanning is off).
 
-### FR-14 — History preservation and destructive actions
+### FR-14 - History preservation and destructive actions
 
 Completed sessions, cancelled/completed tasks, learned-topic dates, and revision history are preserved
 across replans and edits. Deleting a goal/subject/topic/task with dependent history is blocked; archive
@@ -339,7 +339,7 @@ require confirmation and explain the consequence.
 **Acceptance:** After any replan, completed sessions remain byte-for-byte unchanged in status, actual
 minutes, and timestamps; archived data can be restored; no orphan records exist after any operation.
 
-### FR-15 — Settings
+### FR-15 - Settings
 
 Settings cover availability, session/break lengths and horizon, revision preset and length, automatic
 replanning, appearance (system/light/dark, dynamic color), and an about section stating local-only data
@@ -350,12 +350,12 @@ topics, not to existing revision tasks.
 plan triggers regeneration when automatic replanning is enabled (otherwise the plan is marked stale);
 no network permission is required for settings.
 
-### FR-16 — Accessibility and design quality
+### FR-16 - Accessibility and design quality
 
 The app targets WCAG 2.2 AA for text contrast and non-text contrast, supports system font scaling up to
 200% without clipping critical controls, provides TalkBack labels for all interactive elements, does not
 convey priority or status by color alone, respects reduce-motion, and uses touch targets of at least
-48×48 dp. Timer updates must not spam screen-reader announcements. The app supports edge-to-edge
+48x48 dp. Timer updates must not spam screen-reader announcements. The app supports edge-to-edge
 Android and predictive back where supported.
 
 **Acceptance:** Manual accessibility audit on the Pixel 7 emulator passes; widget tests catch layout
@@ -393,7 +393,7 @@ These are product-level promises; the exact algorithm lives in `docs/scheduling-
 **Impossible deadline copy (example):**
 
 > **This deadline doesn't fit.** "*Async patterns*" needs **3h 10m** before Fri, Oct 31, but your plan can
-> fit **1h 30m**. You need **1h 40m** more. Add about **35 min/day** to Wed–Fri (rounded up to 5 min),
+> fit **1h 30m**. You need **1h 40m** more. Add about **35 min/day** to Wed-Fri (rounded up to 5 min),
 > move the deadline later, or reduce the estimate by **1h 40m**.
 
 ---
@@ -402,13 +402,13 @@ These are product-level promises; the exact algorithm lives in `docs/scheduling-
 
 ### First run
 
-1. Branded splash → short privacy statement ("Everything stays on this device").
-2. Availability setup (weekday/weekend windows, daily limit) → optional "Create your first goal".
+1. Branded splash -> short privacy statement ("Everything stays on this device").
+2. Availability setup (weekday/weekend windows, daily limit) -> optional "Create your first goal".
 3. Empty Today screen with one primary action: create a goal, or finish availability setup.
 
 ### Create work
 
-Goal form → subject form → topic form → task form. Each form validates inline, preserves input on
+Goal form -> subject form -> topic form -> task form. Each form validates inline, preserves input on
 error, and is reachable from empty states. Task creation shows an immediate feasibility preview when a
 deadline is selected.
 
@@ -437,14 +437,14 @@ appear in Today/Schedule like any session, tagged "Revision".
 - **Type:** system font, Material 3 type scale, tabular figures for timers and durations. No bundled
   font assets in v1.
 - **Components:** bottom navigation (Today, Goals, Schedule, Progress) on phones; navigation rail on
-  ≥600dp. Full-screen timer routes hide navigation. Large, thumb-friendly primary actions.
-- **Motion:** 150–250ms standard transitions; no gratuitous animation; honor reduced motion.
+  >=600dp. Full-screen timer routes hide navigation. Large, thumb-friendly primary actions.
+- **Motion:** 150-250ms standard transitions; no gratuitous animation; honor reduced motion.
 - **Data display:** durations formatted as `1h 25m`; dates localized with `intl`; progress shown with
   bars plus textual values.
 - **Android specifics:** Material 3, edge-to-edge, adaptive launcher icon, Android 13+ themed icon,
   predictive back, no permission requests in v1.
 - **States:** loading (skeletons, not spinners where possible), empty (explanation + action), error
-  (plain language + retry), offline (no special state — the app is always offline).
+  (plain language + retry), offline (no special state - the app is always offline).
 
 ---
 
@@ -454,12 +454,12 @@ appear in Today/Schedule like any session, tagged "Revision".
 |---|---|
 | **Privacy / offline** | No network calls, accounts, analytics, ads, or telemetry. Release build should not require the `INTERNET` permission. All data local. |
 | **Determinism** | Scheduler is pure Dart with an injected clock; identical inputs produce identical plans. |
-| **Performance** | Cold start ≤ 2s on the Pixel 7 emulator; schedule rebuild ≤ 100ms for 300 tasks over 14 days; 60fps scrolling; DB queries indexed. |
+| **Performance** | Cold start <= 2s on the Pixel 7 emulator; schedule rebuild <= 100ms for 300 tasks over 14 days; 60fps scrolling; DB queries indexed. |
 | **Reliability** | All schedule mutation occurs in DB transactions; a crash or force-stop must not corrupt sessions; timer state survives process death. |
 | **Data integrity** | Foreign keys enforced; no overlapping sessions by construction; completed history immutable; missed sessions retained. |
-| **Testing** | ≥ 90% branch coverage on the scheduling engine; repository tests against in-memory SQLite; widget tests for core flows; one end-to-end integration test. |
+| **Testing** | >= 90% branch coverage on the scheduling engine; repository tests against in-memory SQLite; widget tests for core flows; one end-to-end integration test. |
 | **Accessibility** | WCAG 2.2 AA contrast, 48dp targets, TalkBack, 200% text, reduce motion, no color-only status. |
-| **Compatibility** | Android 7.0 (API 24) minimum, target/compile SDK 36, phone-first; landscape and ≥600dp layouts usable. |
+| **Compatibility** | Android 7.0 (API 24) minimum, target/compile SDK 36, phone-first; landscape and >=600dp layouts usable. |
 | **Localization** | English-only UI in v1, strings centralized for later localization. |
 | **Tone** | Supportive, factual, non-judgmental; no shaming language around missed sessions. |
 
@@ -469,7 +469,7 @@ appear in Today/Schedule like any session, tagged "Revision".
 
 - A fresh install works in airplane mode and never asks for an account.
 - A learner can create a goal hierarchy and tasks, set availability, and receive a valid plan.
-- The scheduling engine satisfies every hard constraint in §8 and in `docs/scheduling-rules.md`, proven
+- The scheduling engine satisfies every hard constraint in Section 8 and in `docs/scheduling-rules.md`, proven
   by automated tests.
 - Impossible deadlines always produce a clear, numeric explanation.
 - Missing sessions triggers recovery that preserves completed history.
@@ -500,7 +500,7 @@ appear in Today/Schedule like any session, tagged "Revision".
 
 | # | Assumption / decision | Proposed default |
 |---|---|---|
-| A1 | Android application ID | `com.studyflow.app` (must be confirmed before first release; painful to change later) |
+| A1 | Android application ID | `com.studyflow.studyflow` (approved and applied) |
 | A2 | Deadlines are date-only, inclusive through 23:59 local time | Yes |
 | A3 | Priority levels | High / Normal / Low |
 | A4 | Availability model | Per-weekday windows + daily minute cap; no date exceptions in v1 |
@@ -512,7 +512,7 @@ appear in Today/Schedule like any session, tagged "Revision".
 | A10 | Initialization repository | The directory is empty; `git init` is recommended before code exists |
 | A11 | Focus timer notifications | Deferred; timer is accurate across restarts but does not alert in background |
 | A12 | Local-only data | No backup/export in v1; uninstalling deletes data |
-| A13 | Suggested first-run availability | Mon–Fri 18:00–21:00; Sat–Sun 10:00–12:00; fully editable |
+| A13 | Suggested first-run availability | Mon-Fri 18:00-21:00; Sat-Sun 10:00-12:00; fully editable |
 | A14 | Revision lifecycle | One cycle per topic; preset changes apply only to topics learned afterward |
 
 ---
