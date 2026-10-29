@@ -24,10 +24,12 @@ void main() {
     );
 
     await _tapTab(tester, 'Schedule');
+    await tester.pumpAndSettle();
     expect(
-      find.text('Schedule screen - arrives in a later milestone.'),
+      find.text('No plan generated yet. Tap Generate Plan.'),
       findsOneWidget,
     );
+    expect(find.text('Generate Plan'), findsOneWidget);
 
     await _tapTab(tester, 'Progress');
     expect(

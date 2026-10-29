@@ -34,7 +34,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   }
 
   Future<void> _pickDeadline() async {
-    final now = ref.read(clockProvider)();
+    final now = ref.read(clockProvider).now;
     final today = DateTime(now.year, now.month, now.day);
     final picked = await showDatePicker(
       context: context,

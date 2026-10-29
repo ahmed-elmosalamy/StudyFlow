@@ -19,6 +19,14 @@ class AvailabilityRepository {
         .watch();
   }
 
+  Future<List<AvailabilityWindow>> getAll() {
+    return (_db.select(_db.availabilityWindows)..orderBy([
+          (t) => OrderingTerm.asc(t.weekday),
+          (t) => OrderingTerm.asc(t.startMinute),
+        ]))
+        .get();
+  }
+
   Future<AvailabilityWindow?> getById(String id) {
     return (_db.select(
       _db.availabilityWindows,

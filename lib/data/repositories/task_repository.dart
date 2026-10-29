@@ -18,6 +18,31 @@ class TaskRepository {
     )..orderBy([(t) => OrderingTerm.asc(t.createdAt)])).watch();
   }
 
+  Future<List<Task>> getPlannableTasks() async {
+    final query =
+        _db.select(_db.tasks).join([
+            innerJoin(_db.topics, _db.topics.id.equalsExp(_db.tasks.topicId)),
+            innerJoin(
+              _db.subjects,
+              _db.subjects.id.equalsExp(_db.topics.subjectId),
+            ),
+            innerJoin(_db.goals, _db.goals.id.equalsExp(_db.subjects.goalId)),
+          ])
+          ..where(
+            _db.tasks.status.equalsValue(TaskStatus.open) &
+                _db.tasks.remainingMinutes.isBiggerThanValue(0) &
+                _db.goals.status.equalsValue(GoalStatus.active) &
+                _db.subjects.status.equalsValue(SubjectStatus.active) &
+                _db.topics.status.equalsValue(TopicStatus.archived).not(),
+          )
+          ..orderBy([
+            OrderingTerm.asc(_db.tasks.createdAt),
+            OrderingTerm.asc(_db.tasks.id),
+          ]);
+    final rows = await query.get();
+    return [for (final row in rows) row.readTable(_db.tasks)];
+  }
+
   Future<Task?> getById(String id) {
     return (_db.select(
       _db.tasks,

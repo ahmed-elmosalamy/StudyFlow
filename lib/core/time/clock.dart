@@ -1,23 +1,24 @@
 import 'local_date.dart';
 
 abstract class Clock {
-  LocalDate get today;
+  const Clock();
 
-  int get nowMinuteOfDay;
+  DateTime get now;
+
+  LocalDate get today {
+    final value = now;
+    return LocalDate(value.year, value.month, value.day);
+  }
+
+  int get nowMinuteOfDay {
+    final value = now;
+    return value.hour * 60 + value.minute;
+  }
 }
 
-class SystemClock implements Clock {
+class SystemClock extends Clock {
   const SystemClock();
 
   @override
-  LocalDate get today {
-    final now = DateTime.now();
-    return LocalDate(now.year, now.month, now.day);
-  }
-
-  @override
-  int get nowMinuteOfDay {
-    final now = DateTime.now();
-    return now.hour * 60 + now.minute;
-  }
+  DateTime get now => DateTime.now();
 }

@@ -22,6 +22,36 @@ class SessionRepository {
         .watch();
   }
 
+  Stream<List<StudySession>> watchScheduledFrom(String fromDate) {
+    return (_db.select(_db.studySessions)
+          ..where(
+            (t) =>
+                t.status.equalsValue(SessionStatus.scheduled) &
+                t.sessionDate.isBiggerOrEqualValue(fromDate),
+          )
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.sessionDate),
+            (t) => OrderingTerm.asc(t.startMinute),
+          ]))
+        .watch();
+  }
+
+  Future<List<StudySession>> getPlanningCandidates({required String today}) {
+    return (_db.select(_db.studySessions)
+          ..where(
+            (t) =>
+                t.status.equalsValue(SessionStatus.completed) |
+                t.status.equalsValue(SessionStatus.in_progress) |
+                (t.status.equalsValue(SessionStatus.scheduled) &
+                    t.sessionDate.equals(today)),
+          )
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.sessionDate),
+            (t) => OrderingTerm.asc(t.startMinute),
+          ]))
+        .get();
+  }
+
   Future<StudySession?> getById(String id) {
     return (_db.select(
       _db.studySessions,
