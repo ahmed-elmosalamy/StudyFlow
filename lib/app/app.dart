@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,12 +18,14 @@ class StudyFlowApp extends ConsumerStatefulWidget {
 class _StudyFlowAppState extends ConsumerState<StudyFlowApp> {
   late final _router = buildRouter();
   late final AppLifecycleListener _lifecycleListener;
+  var _firstFrameRendered = false;
+  var _reconcileInFlight = false;
 
   @override
   void initState() {
     super.initState();
     _lifecycleListener = AppLifecycleListener(onResume: _reconcile);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _reconcile());
+    WidgetsBinding.instance.addPostFrameCallback(_onFirstFrame);
   }
 
   @override
@@ -31,16 +34,34 @@ class _StudyFlowAppState extends ConsumerState<StudyFlowApp> {
     super.dispose();
   }
 
+  void _onFirstFrame(Duration _) {
+    _firstFrameRendered = true;
+    _bootLog('first frame rendered');
+    _reconcile();
+  }
+
   void _reconcile() {
-    if (!mounted) {
+    if (!mounted || !_firstFrameRendered || _reconcileInFlight) {
       return;
     }
+    _reconcileInFlight = true;
+    _bootLog('reconcile started');
+    final stopwatch = Stopwatch()..start();
     unawaited(
-      ref.read(reconciliationServiceProvider).reconcile().catchError((
-        Object error,
-      ) {
-        debugPrint('Reconciliation failed: $error');
-      }),
+      ref
+          .read(reconciliationServiceProvider)
+          .reconcile()
+          .then((_) {
+            _bootLog(
+              'reconcile finished in ${stopwatch.elapsedMilliseconds}ms',
+            );
+          })
+          .catchError((Object error) {
+            debugPrint('Reconciliation failed: $error');
+          })
+          .whenComplete(() {
+            _reconcileInFlight = false;
+          }),
     );
   }
 
@@ -54,5 +75,11 @@ class _StudyFlowAppState extends ConsumerState<StudyFlowApp> {
       themeMode: ThemeMode.system,
       routerConfig: _router,
     );
+  }
+}
+
+void _bootLog(String message) {
+  if (kDebugMode) {
+    debugPrint('[boot] $message');
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,9 @@ import 'app/app.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kDebugMode) {
+    debugPrint('[boot] main() started');
+  }
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   final isDark =
@@ -24,4 +28,7 @@ void main() {
   );
 
   runApp(const ProviderScope(child: StudyFlowApp()));
+  if (kDebugMode) {
+    debugPrint('[boot] runApp() called');
+  }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches AppTheme light colorScheme.surface so the launch window blends
+         into the first Flutter frame. -->
+    <color name="launch_background">#FBF8FF</color>
+</resources>

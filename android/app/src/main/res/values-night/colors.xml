@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches AppTheme dark colorScheme.surface so the launch window blends
+         into the first Flutter frame instead of flashing solid black. -->
+    <color name="launch_background">#121318</color>
+</resources>
