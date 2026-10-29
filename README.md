@@ -1,17 +1,64 @@
-# studyflow
+# StudyFlow
 
-A new Flutter project.
+An offline-first study planner for Android. Organize learning around goals,
+subjects, and topics; generate a deterministic study schedule from your weekly
+availability; run focus timers; and track progress over time. All data stays on
+the device — no accounts, cloud sync, ads, or AI.
 
-## Getting Started
+## Requirements
 
-This project is a starting point for a Flutter application.
+- Flutter 3.44.x / Dart 3.12.x
+- Android SDK (compileSdk/targetSdk as configured by Flutter)
 
-A few resources to get you started if this is your first Flutter project:
+## Run
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Start an emulator or connect a device, then:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```sh
+flutter run
+```
+
+To install without attaching the debugger:
+
+```sh
+flutter install --debug -d emulator-5554
+```
+
+## Test
+
+```sh
+flutter test
+```
+
+## Build
+
+```sh
+flutter build apk --release
+```
+
+The release build enables R8 code shrinking and resource shrinking
+(`android/app/build.gradle.kts` + `android/app/proguard-rules.pro`). It is
+currently signed with the debug key so `flutter run --release` works; provide a
+real signing config before publishing.
+
+## Known emulator issue: black screen
+
+On some emulator quick-boot snapshots the WindowManager state gets corrupted:
+every app window is composited with `mShownAlpha=0.0` (the app is running and
+has drawn, but nothing is visible). All apps are affected; the launcher still
+works.
+
+Fix:
+
+```sh
+adb reboot
+```
+
+If the problem survives a normal reboot, cold boot the emulator without loading
+a snapshot:
+
+```sh
+emulator -avd <name> -no-snapshot-load
+```
+
+This is an emulator/quick-boot issue, not an app bug.

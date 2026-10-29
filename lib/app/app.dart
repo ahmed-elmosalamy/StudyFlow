@@ -57,7 +57,9 @@ class _StudyFlowAppState extends ConsumerState<StudyFlowApp> {
             );
           })
           .catchError((Object error) {
-            debugPrint('Reconciliation failed: $error');
+            if (kDebugMode) {
+              debugPrint('Reconciliation failed: $error');
+            }
           })
           .whenComplete(() {
             _reconcileInFlight = false;
